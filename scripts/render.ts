@@ -241,6 +241,11 @@ export function layout(o: LayoutOpts): string {
 <title>${escapeHtml(o.title)}</title>
 <meta name="description" content="${escapeHtml(o.description)}" />
 <meta name="color-scheme" content="light dark" />
+<meta property="og:title" content="${escapeHtml(o.title)}" />
+<meta property="og:description" content="${escapeHtml(o.description)}" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" type="image/svg+xml" href="${o.base}assets/favicon.svg" />
 <link rel="stylesheet" href="${o.base}assets/site.css" />
 <script>${HEAD_THEME_SCRIPT}</script>
 </head>

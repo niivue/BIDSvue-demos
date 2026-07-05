@@ -89,8 +89,9 @@ Two **floating ribbons**, not full-width bars:
 
 ## Deploy
 
-- Push to `main` → `.github/workflows/deploy.yml` (GitHub Actions) builds with
-  Bun and deploys `dist/` to GitHub Pages. `workflow_dispatch` also available.
+- Push to `main` → `.github/workflows/deploy.yml` (GitHub Actions) type-checks,
+  builds with Bun, and deploys `dist/` to GitHub Pages (so `--no-verify` local
+  commits can't ship type errors). `workflow_dispatch` also available.
 - Enable once under **Settings → Pages → Source → GitHub Actions**.
 - The build emits `.nojekyll` so `assets/` is served verbatim.
 
