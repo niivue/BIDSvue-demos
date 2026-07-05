@@ -38,6 +38,9 @@ into an alternating column.
   browser (`NO_OPEN=1` to skip). `PORT` overrides the port.
 - `bun run build` — compile the static site into `dist/`.
 - `bun run preview` — build, then serve `dist/` as Pages will (port 4173).
+- `bun run typecheck` — `tsc --noEmit`. **Enforced on commit** via the
+  `.githooks/pre-commit` hook (activated by `bun install`'s `prepare` script,
+  which sets `core.hooksPath` to `.githooks`). Bypass with `--no-verify`.
 
 ## Authoring convention (KEEP GitHub-native)
 
@@ -114,11 +117,14 @@ Deliberately **kept** (not over-defensive): `.prose kbd` / `.prose blockquote`
 base styles (valid any time an author writes them); the watch signature gate;
 the no-FOUC head script; the browser-opener / `watch` try/catch.
 
+Follow-ups since done:
+
+- Added `@types/bun` + `typescript` devDeps; `tsconfig` now uses
+  `"types": ["bun"]`. `bun run typecheck` passes clean and is enforced on commit
+  (see the pre-commit hook above).
+
 Known non-blockers (left as-is):
 
-- `tsconfig.json` references `bun-types`, which isn't installed, so `bunx tsc`
-  errors. `bun run` type-erases and runs fine; `tsc` is not part of the build.
-  Add `bun-types` (or `@types/bun`) as a devDep if editor type-checking matters.
 - **Authoring constraints** (Low): two `## N.` steps sharing a number produce
   duplicate `id="step-N"`; reference-style links **inside** a `> [!NOTE]` callout
   don't resolve (the callout body is parsed in isolation). Neither occurs in

@@ -57,14 +57,21 @@ nicer home.
 Requires [Bun](https://bun.sh).
 
 ```bash
-bun install        # first time only
+bun install        # first time only (also activates the pre-commit hook)
 bun run dev        # build + serve at http://localhost:5173 with live reload
 bun run build      # compile the static site into dist/
 bun run preview    # build, then serve dist/ exactly as Pages will
+bun run typecheck  # tsc --noEmit
 ```
 
 Editing any Markdown file, a screenshot, `site.config.ts`, or the assets while
 `bun run dev` is running rebuilds the site and reloads the browser.
+
+A version-controlled **pre-commit hook** (`.githooks/pre-commit`) runs
+`bun run typecheck` and blocks commits that don't type-check. `bun install`
+points `core.hooksPath` at `.githooks` via the `prepare` script; if you cloned
+without installing, run `git config core.hooksPath .githooks` once. Bypass a
+single commit with `git commit --no-verify`.
 
 ## Deploying
 
