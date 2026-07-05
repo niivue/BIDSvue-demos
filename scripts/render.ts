@@ -245,7 +245,7 @@ export function layout(o: LayoutOpts): string {
 <meta property="og:description" content="${escapeHtml(o.description)}" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
-<link rel="icon" type="image/svg+xml" href="${o.base}assets/favicon.svg" />
+<link rel="icon" type="image/png" href="${o.base}assets/favicon.png" />
 <link rel="stylesheet" href="${o.base}assets/site.css" />
 <script>${HEAD_THEME_SCRIPT}</script>
 </head>
