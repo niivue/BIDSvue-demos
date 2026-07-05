@@ -1,0 +1,817 @@
+/* =========================================================================
+   BIDSvue demos — design system
+   Ported from BIDSvue's own theme tokens (src/lib/styles/theme.css): the
+   same surfaces, borders, text ramp, and the six accent schemes (Orange is
+   the release default; Sage, Garnet, Periwinkle, Violet, Indigo optional).
+   Light + dark, with the accent bleeding into focus rings, links, chips,
+   and the translucent glow around every screenshot.
+   ========================================================================= */
+
+/* ------- Reset ------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+}
+
+/* ------- Theme tokens (light; Orange accent by default) ------------------- */
+:root {
+  --bg-base: #ffffff;
+  --bg-sidebar: #f4f5f7;
+  --bg-elevated: #fafbfc;
+  --bg-statusbar: #ededef;
+
+  --border-subtle: rgba(15, 17, 21, 0.08);
+  --border-strong: rgba(15, 17, 21, 0.12);
+
+  --fg-base: #1a1c20;
+  --fg-muted: rgba(15, 17, 21, 0.62);
+  --fg-faint: rgba(15, 17, 21, 0.42);
+
+  /* Orange (#BF5700) is the shipped default. */
+  --accent: #bf5700;
+  --accent-hover: #a44900;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(191, 87, 0, 0.13);
+  --accent-glow: rgba(191, 87, 0, 0.32);
+
+  /* Type + rhythm. BIDSvue uses the platform UI font; we keep that identity
+     and just push weight/tracking on display headings for a branded feel. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    "Cascadia Code", Consolas, monospace;
+
+  --maxw: 1120px;
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  color-scheme: light;
+  accent-color: var(--accent);
+}
+
+/* Dark: explicit override wins; otherwise follow the OS when unset. */
+:root[data-theme="dark"] {
+  --bg-base: #1c1d20;
+  --bg-sidebar: #17181b;
+  --bg-elevated: #202125;
+  --bg-statusbar: #131418;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --fg-base: #ecedef;
+  --fg-muted: rgba(236, 237, 239, 0.65);
+  --fg-faint: rgba(236, 237, 239, 0.4);
+
+  --accent-soft: rgba(191, 87, 0, 0.2);
+  --accent-glow: rgba(191, 87, 0, 0.45);
+
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg-base: #1c1d20;
+    --bg-sidebar: #17181b;
+    --bg-elevated: #202125;
+    --bg-statusbar: #131418;
+
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+
+    --fg-base: #ecedef;
+    --fg-muted: rgba(236, 237, 239, 0.65);
+    --fg-faint: rgba(236, 237, 239, 0.4);
+
+    --accent-soft: rgba(191, 87, 0, 0.2);
+    --accent-glow: rgba(191, 87, 0, 0.45);
+
+    color-scheme: dark;
+  }
+}
+
+/* ------- Accent schemes (match BIDSvue exactly) --------------------------- */
+:root[data-accent="orange"] {
+  --accent: #bf5700;
+  --accent-hover: #a44900;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(191, 87, 0, 0.13);
+  --accent-glow: rgba(191, 87, 0, 0.32);
+}
+:root[data-accent="sage"] {
+  --accent: #6f9179;
+  --accent-hover: #5c7a65;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(163, 193, 173, 0.22);
+  --accent-glow: rgba(135, 168, 146, 0.4);
+}
+:root[data-accent="garnet"] {
+  --accent: #73000a;
+  --accent-hover: #5e0008;
+  --accent-text: #ffffff;
+  --accent-soft: rgba(115, 0, 10, 0.14);
+  --accent-glow: rgba(115, 0, 10, 0.36);
+}
+:root[data-accent="periwinkle"] {
+  --accent: #88a9f1;
+  --accent-hover: #6d90e0;
+  --accent-text: #1a2620;
+  --accent-soft: rgba(136, 169, 241, 0.22);
+  --accent-glow: rgba(136, 169, 241, 0.45);
+}
+:root[data-accent="violet"] {
+  --accent: #967dff;
+  --accent-hover: #8269e0;
+  --accent-text: #1a2620;
+  --accent-soft: rgba(150, 125, 255, 0.18);
+  --accent-glow: rgba(150, 125, 255, 0.42);
+}
+:root[data-accent="indigo"] {
+  --accent: #7a73ec;
+  --accent-hover: #665fcd;
+  --accent-text: #1a2620;
+  --accent-soft: rgba(122, 115, 236, 0.18);
+  --accent-glow: rgba(122, 115, 236, 0.42);
+}
+/* Dark-mode readability: the light accents get white on-text when used as
+   solid fills against dark surfaces would be low-contrast the other way, so
+   keep their designed on-color. Nothing to override — vars already hold it. */
+
+/* ------- Base ------------------------------------------------------------- */
+body {
+  font-family: var(--font-sans);
+  color: var(--fg-base);
+  background: var(--bg-base);
+  line-height: 1.6;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  /* faint top-down wash echoing BIDSvue's elevated launch surface */
+  background-image: linear-gradient(
+    var(--bg-elevated),
+    var(--bg-base) 480px
+  );
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+a {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+a:hover {
+  color: var(--accent-hover);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: clamp(1.1rem, 4vw, 2.5rem);
+}
+
+/* ------- Nav ribbon (floats top-left; only the bottom-right corner beveled) */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.62rem 1.2rem 0.7rem;
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  border-radius: 0 0 16px 0; /* lower-right beveled; other corners flush */
+  box-shadow: 8px 8px 30px -18px rgba(0, 0, 0, 0.3);
+}
+.topbar__sep {
+  color: var(--fg-faint);
+  font-weight: 400;
+  user-select: none;
+}
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5ch;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  color: var(--fg-base);
+}
+.brand__sub {
+  font-weight: 600;
+  color: var(--fg-faint);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+.topnav-link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.topnav-link:hover {
+  color: var(--accent);
+}
+
+/* theme + accent controls (live in the bottom-right tab) */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-base);
+  color: var(--fg-muted);
+  cursor: pointer;
+  caret-color: transparent;
+  user-select: none;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.icon-btn:hover {
+  color: var(--fg-base);
+  border-color: var(--accent);
+}
+.icon-btn svg {
+  width: 17px;
+  height: 17px;
+}
+.icon-btn .moon {
+  display: none;
+}
+:root[data-theme="dark"] .icon-btn .moon {
+  display: block;
+}
+:root[data-theme="dark"] .icon-btn .sun {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .icon-btn .moon {
+    display: block;
+  }
+  :root:not([data-theme]) .icon-btn .sun {
+    display: none;
+  }
+}
+
+.swatches {
+  display: flex;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-base);
+}
+.swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  /* Empty <button>s: stop Chromium painting a text caret on focus. */
+  caret-color: transparent;
+  user-select: none;
+  transition: transform 0.12s;
+}
+.swatch:hover {
+  transform: scale(1.18);
+}
+.swatch[aria-pressed="true"] {
+  border-color: var(--fg-base);
+}
+.swatch--orange {
+  background: #bf5700;
+}
+.swatch--sage {
+  background: #6f9179;
+}
+.swatch--garnet {
+  background: #73000a;
+}
+.swatch--periwinkle {
+  background: #88a9f1;
+}
+.swatch--violet {
+  background: #967dff;
+}
+.swatch--indigo {
+  background: #7a73ec;
+}
+
+/* ------- Hero ------------------------------------------------------------- */
+.hero {
+  padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
+  text-align: center;
+}
+.hero h1 {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+.hero h1 b {
+  color: var(--accent);
+}
+.hero__tagline {
+  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+  color: var(--fg-base);
+  font-weight: 600;
+  margin-top: 1rem;
+}
+.hero__intro {
+  max-width: 46rem;
+  margin: 1.1rem auto 0;
+  color: var(--fg-muted);
+  font-size: 1.08rem;
+}
+/* ------- Section scaffolding --------------------------------------------- */
+.section {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+}
+.section__head {
+  max-width: 40rem;
+  margin-bottom: 2.2rem;
+}
+.section__eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.section h2 {
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin-top: 0.4rem;
+}
+.section__lead {
+  color: var(--fg-muted);
+  margin-top: 0.7rem;
+  font-size: 1.05rem;
+}
+
+/* ------- Tutorial cards --------------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 1.2rem;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.16s ease, border-color 0.16s, box-shadow 0.16s;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.16s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  box-shadow: 0 20px 45px -25px var(--accent-glow);
+}
+.card:hover::before {
+  opacity: 1;
+}
+.card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.card h3 {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.card p {
+  color: var(--fg-muted);
+  font-size: 0.98rem;
+}
+.card__meta {
+  margin-top: auto;
+  padding-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+  font-weight: 600;
+}
+.card__go {
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35ch;
+}
+
+/* ------- Tools grid ------------------------------------------------------- */
+.tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+.tool {
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.tool:hover {
+  border-color: var(--accent);
+  background: var(--bg-base);
+}
+.tool strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+.tool span {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+
+/* ------- Tutorial page: step panels -------------------------------------- */
+.tut-hero {
+  /* extra top space so the top-left "back" link clears the nav ribbon */
+  padding-block: clamp(3.6rem, 6vw, 4.5rem) clamp(1.5rem, 3vw, 2.5rem);
+}
+.tut-hero .back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4ch;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--fg-muted);
+  text-decoration: none;
+  margin-bottom: 1.4rem;
+}
+.tut-hero .back:hover {
+  color: var(--accent);
+}
+.tut-hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  max-width: 20ch;
+}
+.tut-hero .lead {
+  margin-top: 1rem;
+  max-width: 52ch;
+  font-size: 1.12rem;
+  color: var(--fg-muted);
+}
+.tut-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.4rem;
+}
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 5vw, 4rem);
+  padding-bottom: clamp(3rem, 7vw, 5rem);
+}
+
+/* A plain (prose-only) panel — e.g. Requirements. */
+.panel {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+}
+
+/* A step panel: numbered, text + screenshot side by side, alternating. */
+.step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+}
+.step:nth-of-type(even) .step__media {
+  order: -1;
+}
+.step__body {
+  min-width: 0;
+}
+.step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 800;
+  font-size: 1.1rem;
+  box-shadow: 0 6px 18px -8px var(--accent-glow);
+  margin-bottom: 1rem;
+}
+.step__body h2 {
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 0.7rem;
+}
+
+/* Screenshot “mat”: the translucent accent glow the brief asked for. */
+.shot {
+  margin: 0;
+  padding: 10px;
+  border-radius: 18px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05),
+    0 28px 60px -28px var(--accent-glow),
+    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: zoom-in;
+}
+.shot:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06),
+    0 40px 80px -30px var(--accent-glow),
+    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.shot img {
+  width: 100%;
+  border-radius: 10px;
+}
+.shot figcaption {
+  padding: 0.7rem 0.4rem 0.2rem;
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+  text-align: center;
+}
+
+/* ------- Prose (rendered markdown inside panels) ------------------------- */
+.prose {
+  min-width: 0;
+}
+.prose > * + * {
+  margin-top: 0.9rem;
+}
+.prose h2,
+.prose h3 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-top: 1.6rem;
+}
+.prose p {
+  color: var(--fg-base);
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.prose li {
+  color: var(--fg-base);
+}
+.prose li::marker {
+  color: var(--accent);
+}
+.prose strong {
+  font-weight: 700;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.12em 0.42em;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: color-mix(in srgb, var(--accent) 78%, var(--fg-base));
+  white-space: nowrap;
+}
+.prose pre {
+  overflow-x: auto;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-subtle);
+}
+.prose pre code {
+  background: none;
+  padding: 0;
+  color: var(--fg-base);
+  white-space: pre;
+}
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.2rem 0 0.2rem 1rem;
+  color: var(--fg-muted);
+  background: var(--accent-soft);
+  border-radius: 0 8px 8px 0;
+}
+.prose a {
+  font-weight: 600;
+}
+.prose img {
+  border-radius: 10px;
+  margin-top: 0.5rem;
+}
+.prose kbd {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  padding: 0.1em 0.45em;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--bg-base);
+}
+
+/* ------- Callouts (blockquotes starting with a marker) ------------------- */
+.callout {
+  display: flex;
+  gap: 0.8rem;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.callout__icon {
+  color: var(--accent);
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.callout p {
+  margin: 0;
+}
+
+/* ------- Lightbox (click a screenshot to enlarge) ------------------------ */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 4vmin;
+  cursor: zoom-out;
+  /* translucent + blurred backdrop, tinted toward the current surface */
+  background: color-mix(in srgb, var(--bg-base) 58%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  /* hidden until opened */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+}
+.lightbox.open {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+.lightbox__frame {
+  margin: 0;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  /* the accent border + glow the brief asked for */
+  box-shadow: 0 0 0 2px var(--accent),
+    0 0 0 8px var(--accent-soft),
+    0 40px 120px -30px var(--accent-glow);
+  transform: scale(0.96);
+  transition: transform 0.2s ease;
+  max-width: min(96vw, 1680px);
+  max-height: 92vh;
+  display: flex;
+}
+.lightbox.open .lightbox__frame {
+  transform: scale(1);
+}
+.lightbox__frame img {
+  display: block;
+  width: auto;
+  height: auto;
+  /* fit inside the frame minus its padding, preserving aspect ratio */
+  max-width: calc(min(96vw, 1680px) - 24px);
+  max-height: calc(92vh - 24px);
+  border-radius: 9px;
+}
+
+/* ------- Footer ----------------------------------------------------------- */
+/* Controls tab pinned into the bottom-right corner: right + bottom edges flush
+   with the page, only the top-left corner (poking up into content) rounded.
+   Fixed, so it floats over whatever content is beneath it. Holds the accent
+   swatches + light/dark toggle. */
+.site-footer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.72rem;
+  background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+  border-top: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+  border-radius: 14px 0 0 0; /* top-left only */
+  box-shadow: -8px -8px 30px -18px rgba(0, 0, 0, 0.3);
+}
+
+/* ------- Responsive ------------------------------------------------------- */
+@media (max-width: 800px) {
+  .step {
+    grid-template-columns: 1fr;
+  }
+  .step:nth-of-type(even) .step__media {
+    order: 0;
+  }
+}
+/* Keep the floating nav tab compact on small screens. */
+@media (max-width: 480px) {
+  .topbar {
+    gap: 0.85rem;
+    padding: 0.55rem 0.85rem 0.6rem;
+  }
+  .brand {
+    font-size: 1.05rem;
+  }
+  .brand__sub {
+    display: none;
+  }
+  .topnav-link {
+    font-size: 0.9rem;
+  }
+}
+
+/* Respect reduced-motion. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

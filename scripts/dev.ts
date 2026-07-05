@@ -1,0 +1,163 @@
+/**
+ * Dev server: builds the site, serves `dist/` on http://localhost:5173, and
+ * live-reloads the browser whenever a Markdown file, the config, or an asset
+ * changes. Run with `bun run dev`.
+ */
+
+import { readdirSync, statSync, watch } from "node:fs"
+import { join } from "node:path"
+import config from "../site.config.ts"
+import { build } from "./build.ts"
+import { resolveFile } from "./static.ts"
+
+const ROOT = new URL("..", import.meta.url).pathname
+const DIST = join(ROOT, "dist")
+const PORT = Number(process.env.PORT ?? 5173)
+
+const RELOAD_SNIPPET = `
+<script>
+(function(){
+  var es = new EventSource("/__livereload");
+  es.onmessage = function(){ location.reload(); };
+  es.onerror = function(){ /* server restarting; browser retries automatically */ };
+})();
+</script>`
+
+const clients = new Set<ReadableStreamDefaultController>()
+const encoder = new TextEncoder()
+
+function notifyReload() {
+  for (const c of clients) {
+    try {
+      c.enqueue(encoder.encode("data: reload\n\n"))
+    } catch {
+      clients.delete(c)
+    }
+  }
+}
+
+await build()
+
+const server = Bun.serve({
+  port: PORT,
+  // The live-reload stream is a long-lived, mostly-silent response; without
+  // this Bun closes it after 10s (a noisy warning + needless reconnects).
+  idleTimeout: 0,
+  async fetch(req) {
+    const url = new URL(req.url)
+
+    // Live-reload event stream.
+    if (url.pathname === "/__livereload") {
+      let self: ReadableStreamDefaultController
+      const stream = new ReadableStream({
+        start(controller) {
+          self = controller
+          clients.add(controller)
+        },
+        cancel() {
+          clients.delete(self)
+        },
+      })
+      return new Response(stream, {
+        headers: {
+          "content-type": "text/event-stream",
+          "cache-control": "no-cache",
+          connection: "keep-alive",
+        },
+      })
+    }
+
+    const r = await resolveFile(DIST, url.pathname)
+    if (!r) return new Response("Not found", { status: 404 })
+
+    // Inject the live-reload client into HTML responses; stream everything else.
+    if (r.type.startsWith("text/html")) {
+      const html = (await r.file.text()).replace("</body>", `${RELOAD_SNIPPET}\n</body>`)
+      return new Response(html, { headers: { "content-type": r.type } })
+    }
+    return new Response(r.file, { headers: { "content-type": r.type } })
+  },
+})
+
+const localUrl = `http://localhost:${server.port}`
+console.log(`\n  ➜  BIDSvue demos dev server`)
+console.log(`  ➜  ${localUrl}\n`)
+
+// Open the site in the default browser (skip with NO_OPEN=1).
+if (!process.env.NO_OPEN) {
+  const opener =
+    process.platform === "darwin"
+      ? ["open", localUrl]
+      : process.platform === "win32"
+        ? ["cmd", "/c", "start", "", localUrl]
+        : ["xdg-open", localUrl]
+  try {
+    Bun.spawn(opener, { stdout: "ignore", stderr: "ignore" })
+  } catch {
+    /* no browser opener available — the URL is printed above */
+  }
+}
+
+// Watch ONLY source locations — never the repo root (the build writes dist/
+// inside it, which would loop).
+const watchTargets = [
+  join(ROOT, "assets"),
+  join(ROOT, "site.config.ts"),
+  ...config.tutorials.map((t) => join(ROOT, t.slug)),
+]
+
+// A content signature of every watched source file (path + mtime + size).
+// macOS fs.watch fires on *access-time* changes too, and the build reads
+// these files (Bun.file/cp) on every run — so a naive rebuild-on-event loops
+// forever. mtime + size don't change when a file is merely read, so we only
+// rebuild when this signature actually changes.
+function sourceSignature(): string {
+  const parts: string[] = []
+  const walk = (p: string) => {
+    let st: ReturnType<typeof statSync>
+    try {
+      st = statSync(p)
+    } catch {
+      return
+    }
+    if (st.isDirectory()) {
+      for (const entry of readdirSync(p)) {
+        if (entry.startsWith(".")) continue
+        walk(join(p, entry))
+      }
+    } else {
+      parts.push(`${p}:${st.mtimeMs}:${st.size}`)
+    }
+  }
+  for (const t of watchTargets) walk(t)
+  return parts.sort().join("|")
+}
+
+let lastSignature = sourceSignature()
+let timer: ReturnType<typeof setTimeout> | null = null
+const rebuild = () => {
+  if (timer) clearTimeout(timer)
+  timer = setTimeout(async () => {
+    const sig = sourceSignature()
+    if (sig === lastSignature) return // spurious event (e.g. read-only access)
+    lastSignature = sig
+    try {
+      await build()
+      // The build re-read (and thus bumped atime on) the sources; refresh the
+      // baseline so those reads don't count as a change next tick.
+      lastSignature = sourceSignature()
+      console.log("  ↻  rebuilt")
+      notifyReload()
+    } catch (err) {
+      console.error("  ✗  build failed:", err instanceof Error ? err.message : err)
+    }
+  }, 80)
+}
+
+for (const target of watchTargets) {
+  try {
+    watch(target, { recursive: true }, rebuild)
+  } catch {
+    /* target may not exist yet; skip it */
+  }
+}

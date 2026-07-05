@@ -1,0 +1,91 @@
+# BIDSvue Demos
+
+Hands-on tutorials for [BIDSvue](https://github.com/niivue/BIDSvue) — creating,
+curating, de-identifying, and sharing BIDS datasets.
+
+The tutorials are written as plain, GitHub-readable Markdown. A small build
+step compiles them into a styled static site (light/dark themes, BIDSvue's
+accent colors, and each numbered step rendered as its own panel) that is
+published to **GitHub Pages**.
+
+> 🌐 **Live site:** https://niivue.github.io/BIDSvue-demos/
+> *(available once GitHub Pages is enabled for this repo — see below)*
+
+## Tutorials
+
+- [Convert ReproIn MRI to BIDS](./mri-reproin-1/README.md) — turn a folder of
+  ReproIn-named DICOMs into a validated, de-identified, shareable dataset.
+
+## Reading the tutorials
+
+Every tutorial folder holds a `README.md` plus its screenshots, so you can read
+it right here on GitHub. The published site simply gives the same content a
+nicer home.
+
+## Writing a new tutorial
+
+1. Create a folder (e.g. `my-tutorial/`) with a `README.md` and its images.
+2. Follow the panel convention — it stays ordinary Markdown:
+
+   ```markdown
+   # Tutorial title
+   A short intro paragraph becomes the page lead.
+
+   ## Requirements
+   - …a plain prose panel…
+
+   ## 1. First step
+   Explain the step, then drop in a screenshot:
+
+   ![Caption shown under the image](my-screenshot.png)
+
+   ## 2. Second step
+   …
+   ```
+
+   - A `# Heading` is the page title.
+   - Text before the first `##` becomes the lead.
+   - A `## N. …` heading becomes a **numbered step panel**; a screenshot in it
+     floats into an alternating column with the accent glow.
+   - Any other `##` heading becomes a plain prose panel.
+   - GitHub alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) render as callouts.
+3. Register it in [`site.config.ts`](./site.config.ts) under `tutorials` (title,
+   summary, tags, duration) so it appears on the landing page.
+
+## Local development
+
+Requires [Bun](https://bun.sh).
+
+```bash
+bun install        # first time only
+bun run dev        # build + serve at http://localhost:5173 with live reload
+bun run build      # compile the static site into dist/
+bun run preview    # build, then serve dist/ exactly as Pages will
+```
+
+Editing any Markdown file, a screenshot, `site.config.ts`, or the assets while
+`bun run dev` is running rebuilds the site and reloads the browser.
+
+## Deploying
+
+Pushing to `main` runs the
+[GitHub Actions workflow](./.github/workflows/deploy.yml), which builds the site
+and deploys `dist/` to GitHub Pages. Enable it once under
+**Settings → Pages → Build and deployment → Source → GitHub Actions**.
+
+## Design
+
+The look and feel is drawn from BIDSvue itself: the same system font, the same
+six accent schemes (Orange by default, plus Sage, Garnet, Periwinkle, Violet,
+and Indigo), and matching light/dark surfaces.
+
+The chrome is two small floating ribbons rather than full-width bars:
+
+- A **nav ribbon** in the top-left corner — "BIDSvue demos", plus links to the
+  tutorials, the source repo, and downloads.
+- A **controls ribbon** in the bottom-right corner — the accent swatches and
+  the light/dark toggle. Your theme and accent choices are remembered.
+
+The accent color also tints the translucent glow around each numbered step's
+screenshot, and clicking any screenshot opens it enlarged in a lightbox over a
+blurred backdrop (click anywhere or press <kbd>Esc</kbd> to close).
