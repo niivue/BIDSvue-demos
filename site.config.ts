@@ -60,6 +60,14 @@ const config: SiteConfig = {
       tags: ['MRI', 'DICOM', 'De-identify', 'Share'],
       duration: '~15 min',
     },
+    {
+      slug: 'meg-mne-1',
+      title: 'From MEG to BIDS',
+      summary:
+        'Use the MNE-BIDS plug-in to create, edit, and share a BIDS dataset.',
+      tags: ['MEG', 'MNE-BIDS', 'De-identify', 'Share'],
+      duration: '~15 min',
+    },
   ],
 
   tools: [
