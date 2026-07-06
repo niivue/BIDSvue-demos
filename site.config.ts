@@ -84,6 +84,14 @@ const config: SiteConfig = {
       tags: ['DataLad', 'Clone', 'Timeseries', 'Dashboard'],
       duration: '~15 min',
     },
+    {
+      slug: 'mrs-dcm-1',
+      title: 'View MRS',
+      summary:
+        'Convert Magnetic Resonance Spectroscopy (MRS) DICOMs and read the metabolite peaks in the spectrum.',
+      tags: ['MRS', 'DICOM', 'Spectra'],
+      duration: '~15 min',
+    },
   ],
 
   tools: [
