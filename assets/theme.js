@@ -1,13 +1,17 @@
-// This site ships no service worker. If a stale one is registered on this
-// origin — e.g. left by a different app previously served on the same localhost
-// port — it hijacks navigations and fetches, eventually throwing "Failed to
-// fetch" from its own sw.js and locking the page up. Unregister the SW scoped
-// to this page (getRegistration() → current scope, so it won't disturb other
-// apps sharing the origin).
-if ("serviceWorker" in navigator) {
+// This site ships no service worker. On a localhost dev port a stale one left
+// by a *different* app previously served there hijacks navigations/fetches and
+// eventually throws "Failed to fetch" from its own sw.js, freezing the page.
+// Clear it — but ONLY on localhost: on a shared origin like github.io a
+// root-scoped worker belonging to another project would also match here, and
+// unregistering it would break that app. Production never has a stale SW of
+// ours (we register none), so this simply doesn't run there.
+if (
+  "serviceWorker" in navigator &&
+  (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+) {
   navigator.serviceWorker
-    .getRegistration()
-    .then((reg) => reg && reg.unregister())
+    .getRegistrations()
+    .then((regs) => regs.forEach((r) => r.unregister()))
     .catch(() => {})
 }
 

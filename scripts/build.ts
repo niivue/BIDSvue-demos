@@ -142,10 +142,10 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
   await mkdir(outDir, { recursive: true })
   await Bun.write(join(outDir, "index.html"), html)
 
-  // Copy every asset in the tutorial folder except the source Markdown and
-  // dotfiles. `recursive` handles both files and nested asset directories.
+  // Copy every asset in the tutorial folder except the source Markdown, the
+  // generated page, and dotfiles. `recursive` handles nested asset directories.
   for (const entry of await readdir(dir)) {
-    if (entry === "README.md" || entry.startsWith(".")) continue
+    if (entry === "README.md" || entry === "index.html" || entry.startsWith(".")) continue
     await cp(join(dir, entry), join(outDir, entry), { recursive: true })
   }
 }

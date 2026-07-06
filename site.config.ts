@@ -158,6 +158,11 @@ const config: SiteConfig = {
       href: 'https://github.com/openneuropet/PET2BIDS',
       blurb: 'Import PET data into BIDS.',
     },
+    {
+      name: 'BIDSvue',
+      href: 'https://github.com/niivue/BIDSvue',
+      blurb: 'Orchestrate BIDS conversion, curation, and viewing.',
+    },
   ],
 }
 
