@@ -16,7 +16,7 @@ import { cp, mkdir, readdir, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { ARROW, HEAD_THEME_SCRIPT, MAXIMIZE, escapeHtml, layout, mdToPanels } from "./render.ts"
+import { ARROW, HEAD_THEME_SCRIPT, escapeHtml, layout, mdToPanels } from "./render.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
@@ -53,7 +53,6 @@ function landingPage(): string {
     <div class="container">
       <h1>Curate BIDS data<br />with <b>${escapeHtml(config.title)}</b></h1>
       <p class="hero__tagline">${escapeHtml(config.tagline)}</p>
-      <button class="hero__peek" type="button" data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE} Peek at BIDSvue</button>
     </div>
   </section>
 

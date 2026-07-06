@@ -215,21 +215,24 @@ export const MAXIMIZE = `<svg viewBox="0 0 24 24" width="15" height="15" fill="n
 
 const ACCENTS = ["orange", "sage", "garnet", "periwinkle", "violet", "indigo"]
 
-// The floating nav ribbon (top-left): brand + three links. On the home page
-// (base === "") the brand opens the app splash in the lightbox instead of
-// navigating; elsewhere it links home. The href stays as a no-JS fallback.
+// The floating nav ribbon (top-left): brand + three links. On the home page an
+// accent "drawer" slides out of the ribbon's right edge to open the app splash
+// in the lightbox.
 function topbar(base: string): string {
   const sep = '<span class="topbar__sep" aria-hidden="true">|</span>'
-  const brandSplash = base === "" ? ' data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen"' : ""
+  const home = base === ""
+  const peek = home
+    ? `\n    <button class="topbar__peek" type="button" data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE}<span>Peek at BIDSvue</span></button>`
+    : ""
   return `
-  <header class="topbar">
-    <a class="brand" href="${base}index.html"${brandSplash}>${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
+  <header class="topbar${home ? " topbar--home" : ""}">
+    <a class="brand" href="${base}index.html">${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
     ${sep}
     <a class="topnav-link" href="${base}index.html#tutorials">Tutorials</a>
     ${sep}
     <a class="topnav-link" href="${escapeHtml(config.appUrl)}">Source</a>
     ${sep}
-    <a class="topnav-link" href="${escapeHtml(config.releasesUrl)}">Download</a>
+    <a class="topnav-link" href="${escapeHtml(config.releasesUrl)}">Download</a>${peek}
   </header>`
 }
 

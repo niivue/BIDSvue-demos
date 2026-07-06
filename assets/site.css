@@ -251,6 +251,51 @@ a:hover {
   color: var(--accent);
 }
 
+/* Home-page "peek" drawer: an accent tab that slides out of the ribbon's right
+   edge. It fills the ribbon's full height (negative margins cancel the padding)
+   and takes over the bottom-right bevel, so it reads as one shape with the
+   ribbon — a drawer pulled out of the tool panel. */
+.topbar--home {
+  border-bottom-right-radius: 0;
+  border-right: 0;
+  padding-right: 0;
+}
+.topbar__peek {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5ch;
+  margin: -0.62rem 0 calc(-0.7rem - 1px) 0.9rem; /* fill top→bottom incl. border */
+  padding-inline: 1.05rem;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--accent-text);
+  background: var(--accent);
+  border-bottom-right-radius: 16px;
+  cursor: zoom-in;
+  transition: background 0.15s;
+}
+.topbar__peek:hover {
+  background: var(--accent-hover);
+}
+.topbar__peek svg {
+  width: 15px;
+  height: 15px;
+}
+/* Not enough room for the drawer on small screens — hide it and give the ribbon
+   its own bevel back. */
+@media (max-width: 620px) {
+  .topbar__peek {
+    display: none;
+  }
+  .topbar--home {
+    border-bottom-right-radius: 16px;
+    border-right: 1px solid var(--border-subtle);
+    padding-right: 1.2rem;
+  }
+}
+
 /* theme + accent controls (live in the bottom-right tab) */
 .controls {
   display: flex;
@@ -363,32 +408,6 @@ a:hover {
   font-weight: 600;
   margin-top: 1rem;
 }
-/* Discoverable, hidden-by-default trigger that opens the app splash in the
-   lightbox. `zoom-in` cursor echoes the screenshot figures. */
-.hero__peek {
-  margin-top: 1.7rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55ch;
-  font: inherit;
-  font-weight: 650;
-  font-size: 0.95rem;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
-  padding: 0.55rem 1.05rem;
-  border-radius: 999px;
-  cursor: zoom-in;
-  transition: background 0.15s, border-color 0.15s, transform 0.12s;
-}
-.hero__peek:hover {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  border-color: var(--accent);
-}
-.hero__peek:active {
-  transform: translateY(1px);
-}
-
 /* ------- Section scaffolding --------------------------------------------- */
 .section {
   padding-block: clamp(1.75rem, 4vw, 3rem);
