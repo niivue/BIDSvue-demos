@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 ## What this is
 
@@ -6,11 +6,11 @@ A tiny static-site generator (Bun + [`marked`](https://github.com/markedjs/marke
 
 ## Architecture / file map
 
-- **`scripts/build.ts`** — Markdown + `site.config.ts` → `dist/`. Emits `dist/index.html` (hero + tutorial cards + tools), `dist/<slug>/index.html` per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at any Pages depth), copies each tutorial's screenshots, copies `assets/`, writes `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries intrinsic `width`/`height` → no layout shift, and **warns at build time on a referenced image that doesn't exist** (typo/missing screenshot before it 404s live). `assets/splash.png` ships via the ordinary `assets/` copy — no special-case copy.
+- **`scripts/build.ts`** — Markdown + `site.config.ts` → `dist/`. Emits `dist/index.html` (hero + tutorial cards + tools), `dist/<slug>/index.html` per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at any Pages depth), copies each tutorial's screenshots and `assets/`, writes `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries intrinsic `width`/`height` → no layout shift, and **warns at build time on a referenced image that doesn't exist** (typo/missing screenshot before it 404s live).
 - **`scripts/render.ts`** — the Markdown → step-panels transform plus the HTML shell (topbar / footer / `layout()`). Takes an injected `DimResolver` (`(href) => {w,h} | null`) so image dimensions come from the caller, not a filesystem read here. Also holds `escapeHtml`, `mdToPanels`, the accent list, the no-FOUC head script, and exports `MAXIMIZE` (the peek-drawer icon).
 - **`scripts/dev.ts`** — dev server on `localhost:5173`, SSE live-reload (`/__livereload`), and a source file watcher that rebuilds + reloads.
 - **`scripts/preview.ts`** — static server on `localhost:4173`; serves a prebuilt `dist/` exactly as Pages will (no watch/reload).
-- **`scripts/static.ts`** — shared MIME table + `resolveFile(dist, pathname)` + `notFoundResponse` (serves `404.html`) used by both dev and preview servers (single source of truth; also contains the `dist/` traversal guard).
+- **`scripts/static.ts`** — shared MIME table + `resolveFile(dist, pathname)` + `notFoundResponse` (serves `404.html`), used by both servers. Contains the `dist/` traversal guard.
 - **`scripts/render.test.ts`** — render fixtures: callout ordering, no alt/caption double-escape, first-figure media extraction.
 - **`scripts/static.test.ts`** — `resolveFile` index/content-type resolution + traversal / malformed-encoding rejection.
 - **`assets/site.css`** — the design system: theme tokens, the two floating ribbons, panels/cards, screenshot lightbox.
@@ -39,8 +39,6 @@ Tutorials stay ordinary Markdown — no frontmatter, no build-only markup.
 - `> [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]` GitHub alerts render as callouts.
 - Register every tutorial in `site.config.ts` under `tutorials` (slug, title, summary, tags, duration). The slug is the folder name and the URL path.
 
-**Trusted-content model:** all Markdown is owner-authored and PR-reviewed, so it is rendered without sanitization by design (raw HTML / links pass through). See `audit_response.md` before adding any untrusted-input path.
-
 ## Markdown style (ALL `.md` files)
 
 Do **not** hard-wrap lines. Use a blank line (EOLN) between paragraphs, list items, and sections, but never break a paragraph across multiple lines — each paragraph, list item, or blockquote paragraph is one physical line. This keeps diffs clean (a wording change touches one line, not a reflowed block) and renders identically on GitHub. Keep fenced code blocks verbatim, and keep a GitHub-alert marker (`> [!TIP]`) on its own line above its content.
@@ -60,12 +58,16 @@ Two **floating ribbons**, not full-width bars:
 - **Adjacent IIFEs in `theme.js` need a separating `;`.** The second IIFE is prefixed with a leading `;` — without it ASI parses it as a call on the first IIFE's return value. This was a real bug; don't remove the semicolon.
 - **All asset/link paths are relative.** `layout()` takes a `base` (`""` at root, `"../"` one level deep) so the output works under the `/BIDSvue-demos/` Pages subpath with no base config.
 
+## Decisions / accepted trade-offs (do not re-litigate)
+
+- **Trusted-content model.** All Markdown/config is owner-authored + PR-reviewed, so it renders **without sanitization by design** — raw HTML and `javascript:` links pass through. Revisit only if untrusted/user-submitted content becomes possible.
+- **`site.config.ts` slugs and sequential step numbering are conventions, not validated.** Heavy validation here would be over-engineering.
+- **`prepare` sets `core.hooksPath .githooks` on every install intentionally.** It's idempotent (`|| true`); don't "guard" it.
+- **CI pins deps, not the runtime.** `bun-version: latest` is deliberate; determinism comes from `bun install --frozen-lockfile`.
+- **Reference-style links inside `> [!NOTE]` callouts don't resolve** (the callout body is parsed in isolation) — a known minor limitation.
+
 ## Deploy
 
 - Push to `main` → `.github/workflows/deploy.yml` (GitHub Actions) type-checks, builds with Bun, and deploys `dist/` to GitHub Pages (so `--no-verify` local commits can't ship type errors). `workflow_dispatch` also available.
 - Enable once under **Settings → Pages → Source → GitHub Actions**.
 - The build emits `.nojekyll` so `assets/` is served verbatim.
-
-## Audit history
-
-Audit history + trust-model decisions live in `audit_response.md`.

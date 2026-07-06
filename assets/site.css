@@ -265,7 +265,6 @@ a:hover {
 .topbar__peek {
   position: relative;
   z-index: 1;
-  align-self: stretch;
   display: inline-flex;
   align-items: center;
   gap: 0.5ch;
