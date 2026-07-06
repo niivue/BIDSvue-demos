@@ -363,12 +363,6 @@ a:hover {
   font-weight: 600;
   margin-top: 1rem;
 }
-.hero__intro {
-  max-width: 46rem;
-  margin: 1.1rem auto 0;
-  color: var(--fg-muted);
-  font-size: 1.08rem;
-}
 /* Discoverable, hidden-by-default trigger that opens the app splash in the
    lightbox. `zoom-in` cursor echoes the screenshot figures. */
 .hero__peek {

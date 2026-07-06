@@ -53,7 +53,6 @@ function landingPage(): string {
     <div class="container">
       <h1>Curate BIDS data<br />with <b>${escapeHtml(config.title)}</b></h1>
       <p class="hero__tagline">${escapeHtml(config.tagline)}</p>
-      <p class="hero__intro">${escapeHtml(config.intro)}</p>
       <button class="hero__peek" type="button" data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE} Peek at BIDSvue</button>
     </div>
   </section>

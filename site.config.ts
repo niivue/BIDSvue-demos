@@ -29,7 +29,7 @@ export type Tool = {
 export type SiteConfig = {
   title: string
   tagline: string
-  /** Longer hero paragraph. */
+  /** Longer description for the home page's meta / social preview (not shown). */
   intro: string
   /** URL of the app / project the demos are for. */
   appUrl: string
@@ -45,7 +45,7 @@ const config: SiteConfig = {
   title: 'BIDSvue',
   tagline: 'Create, curate, de-identify, and share BIDS datasets.',
   intro:
-    'BIDSvue transforms raw neuroimaging data into curated archives that you can explore to fix errors, strip identifiable features, and publish to the cloud..',
+    'BIDSvue transforms raw neuroimaging data into curated archives that you can explore to fix errors, strip identifiable features, and publish to the cloud.',
   appUrl: 'https://github.com/niivue/BIDSvue',
   releasesUrl: 'https://github.com/niivue/BIDSvue/releases',
   defaultAccent: 'orange',
