@@ -1,7 +1,7 @@
 /**
  * Dev server: builds the site, serves `dist/` on http://localhost:5173, and
- * live-reloads the browser whenever a Markdown file, the config, or an asset
- * changes. Run with `bun run dev`.
+ * live-reloads the browser whenever a Markdown file or an asset changes. (Editing
+ * `site.config.ts` needs a restart — build.ts caches the import.) Run `bun run dev`.
  */
 
 import { readdirSync, statSync, watch } from "node:fs"

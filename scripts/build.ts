@@ -190,6 +190,9 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
   <a class="notfound__home" data-home href="/">${ARROW} Back to the demos</a>
 </main>
 <script>
+// Resolve "home" to the project-pages root (origin + first path segment, e.g.
+// /BIDSvue-demos/). Assumes a GitHub project-pages deploy; a user/org root site
+// or local preview would want just "/".
 (function(){
   var seg = location.pathname.split("/")[1] || "";
   document.querySelector("[data-home]").href = location.origin + "/" + (seg ? seg + "/" : "");
@@ -213,14 +216,12 @@ export async function build(): Promise<void> {
   for (const t of config.tutorials) await buildTutorial(t)
 
   await cp(join(ROOT, "assets"), join(DIST, "assets"), { recursive: true })
-  // The app splash, featured in the home-page lightbox.
-  await cp(join(ROOT, "splash.png"), join(DIST, "splash.png"))
 }
 
 if (import.meta.main) {
   const t0 = performance.now()
   await build()
   const ms = Math.round(performance.now() - t0)
-  const pages = 1 + config.tutorials.length
-  console.log(`✓ Built ${pages} page${pages === 1 ? "" : "s"} → dist/  (${ms}ms)`)
+  const pages = config.tutorials.length + 2 // home + 404 + one per tutorial
+  console.log(`✓ Built ${pages} pages → dist/  (${ms}ms)`)
 }

@@ -16,10 +16,15 @@ into an alternating column.
   per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at
   any Pages depth), copies each tutorial's screenshots, copies `assets/`, writes
   `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries
-  intrinsic `width`/`height` → no layout shift.
+  intrinsic `width`/`height` → no layout shift, and **warns at build time on a
+  referenced image that doesn't exist** (typo/missing screenshot before it 404s
+  live). `assets/splash.png` ships via the ordinary `assets/` copy — no
+  special-case copy.
 - **`scripts/render.ts`** — the Markdown → step-panels transform plus the HTML
-  shell (topbar / footer / `layout()`). Also holds `escapeHtml`, `mdToPanels`,
-  the accent list, and the no-FOUC head script.
+  shell (topbar / footer / `layout()`). Takes an injected `DimResolver`
+  (`(href) => {w,h} | null`) so image dimensions come from the caller, not a
+  filesystem read here. Also holds `escapeHtml`, `mdToPanels`, the accent list,
+  the no-FOUC head script, and exports `MAXIMIZE` (the peek-drawer icon).
 - **`scripts/dev.ts`** — dev server on `localhost:5173`, SSE live-reload
   (`/__livereload`), and a source file watcher that rebuilds + reloads.
 - **`scripts/preview.ts`** — static server on `localhost:4173`; serves a
@@ -35,7 +40,9 @@ into an alternating column.
   ribbons, panels/cards, screenshot lightbox.
 - **`assets/theme.js`** — theme toggle + accent picker + screenshot lightbox.
 - **`site.config.ts`** — site config (title, tagline, intro, URLs,
-  `defaultAccent`) and the `tutorials` + `tools` registries.
+  `defaultAccent`) and the `tutorials` + `tools` registries. Six tutorials
+  currently registered: `mri-reproin-1`, `meg-mne-1`, `pet-pet2bids-1`,
+  `datalad-1`, `mrs-dcm-1`, `mri-physio-1`.
 
 ## Commands
 
@@ -77,13 +84,18 @@ Two **floating ribbons**, not full-width bars:
 
 - **Top-left nav ribbon** (`.topbar`): a single line — brand
   "BIDSvue demos" then `Tutorials | Source | Download`. Only the lower-right
-  corner is beveled.
+  corner is beveled. On the **home page** the ribbon gets a `.topbar--home`
+  modifier and carries an accent **"Peek at BIDSvue" drawer** (`.topbar__peek`)
+  that slides out of the ribbon's right edge and opens `assets/splash.png` in
+  the lightbox. Hidden under 620px (a media query restores the ribbon's bevel
+  there).
 - **Bottom-right controls ribbon** (`.site-footer` / `.controls`): the six
   accent swatches + the light/dark toggle. Only the upper-left corner is
   beveled.
-- **Screenshots** open in a click-to-open / click-to-close (or Escape)
-  lightbox with an accent border over a blurred backdrop. One overlay is reused
-  for all images on a page.
+- **Lightbox**: click-to-open / click-to-close (or Escape) over a blurred
+  backdrop, accent border, one reused overlay per page. It opens any
+  `[data-lightbox-src]` element (the peek drawer, screenshots), not just
+  `.shot` figures.
 
 ## Load-bearing gotchas (do NOT "simplify" away)
 

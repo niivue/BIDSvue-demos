@@ -15,6 +15,16 @@ published to **GitHub Pages**.
 
 - [Convert ReproIn MRI to BIDS](./mri-reproin-1/README.md) — turn a folder of
   ReproIn-named DICOMs into a validated, de-identified, shareable dataset.
+- [From MEG to BIDS](./meg-mne-1/README.md) — use the MNE-BIDS plug-in to create,
+  edit, and share a BIDS dataset.
+- [Convert PET to BIDS](./pet-pet2bids-1/README.md) — use PET2BIDS to create,
+  edit, and share a BIDS dataset.
+- [Explore a DataLad dataset](./datalad-1/README.md) — clone a huge remote
+  dataset and fetch only the files you need.
+- [View MRS](./mrs-dcm-1/README.md) — convert MRS DICOMs and read the metabolite
+  peaks in the spectrum.
+- [Embedded physiological recordings](./mri-physio-1/README.md) — import and
+  inspect physiological measures acquired with MRI, and refine with AI.
 
 ## Reading the tutorials
 
@@ -51,6 +61,11 @@ nicer home.
    - GitHub alerts (`> [!NOTE]`, `> [!TIP]`, `> [!WARNING]`) render as callouts.
 3. Register it in [`site.config.ts`](./site.config.ts) under `tutorials` (title,
    summary, tags, duration) so it appears on the landing page.
+
+The build reads each screenshot's real dimensions and emits `<img width/height>`
+so images reserve their space up front (no layout shift), and it **warns at
+build time if a referenced image is missing** — so typos surface before they 404
+on the live site.
 
 ## Local development
 
@@ -91,7 +106,9 @@ and Indigo), and matching light/dark surfaces.
 The chrome is two small floating ribbons rather than full-width bars:
 
 - A **nav ribbon** in the top-left corner — "BIDSvue demos", plus links to the
-  tutorials, the source repo, and downloads.
+  tutorials, the source repo, and downloads. On the home page it carries an
+  accent **"Peek at BIDSvue" drawer** that slides out of the ribbon's right edge
+  and opens the app splash in the lightbox.
 - A **controls ribbon** in the bottom-right corner — the accent swatches and
   the light/dark toggle. Your theme and accent choices are remembered.
 

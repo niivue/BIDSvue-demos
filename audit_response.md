@@ -1,10 +1,45 @@
-# Audit response (2026-07-05)
+# Audit responses
 
-Response to the external review (`audit_temp.md`), triaged under the project's
-**lean-over-defensive**, **trusted-content** model: tutorials are authored by
-the repo owner and registered in `site.config.ts`; PRs are maintainer-reviewed;
-there is no untrusted runtime input. Verified independently by a security agent
-and a refactor agent.
+Triaged under the project's **lean-over-defensive**, **trusted-content** model:
+tutorials/config are authored by the repo owner and registered in
+`site.config.ts`; PRs are maintainer-reviewed; there is no untrusted runtime
+input. Each round verified independently by security + refactor agents.
+
+## 2026-07-06 (round 3)
+
+External review + agents over the six new tutorials, the layout-shift /
+per-image-dimension work, the 404 page, and the splash-in-lightbox → drawer.
+Security agent found **no High/Med bugs**; new code (`pngSize`, `notFoundPage`,
+lightbox `[data-lightbox-src]`, the drawer + its 620px fallback) verified clean;
+all six tutorials' images resolve with no orphans.
+
+**Fixed**
+
+- **Stale README tutorial list** — listed only ReproIn; now lists all six.
+- **`dev.ts` header comment** said config hot-reloads; it isn't watched — corrected.
+- **Build page count** reported 7 but emits 8 (index + 404 + 6 tutorials) — fixed to `2 + tutorials.length`.
+- **Moved `splash.png` → `assets/splash.png`** so the normal asset copy deploys it; removed the one-off root-file `cp`. Drawer now references `${base}assets/splash.png`.
+- **Brand double-meaning** (brand link *and* splash trigger) — already resolved when the splash moved to the drawer; the brand is now a plain home link.
+
+**Accepted + documented**
+
+- **404 home-link** uses `location.pathname.split('/')[1]` — correct for this
+  GitHub *project-pages* deploy (`/BIDSvue-demos/`); added a comment noting a
+  root/custom-domain deploy would need `/`. A configurable base is speculative
+  flexibility with zero current callers.
+- Raw HTML / unsafe protocols from Markdown, and trusted slug / sequential step
+  numbering — reaffirmed acceptable (reviewer agreed).
+
+**Declined**
+
+- A dedicated deploy-fixture test for the splash asset — moving `splash.png`
+  under `assets/` makes it non-optional (copied with every other asset), so the
+  "forgot to deploy" risk it would guard no longer exists.
+- Dead-code removal — swept CSS selectors vs emitted HTML and all exports/imports:
+  nothing dead (`.hero__peek`/`.hero__cta`/`.hero__eyebrow`/`.hero__intro`/`.btn*`
+  already gone; `MAXIMIZE`/`ARROW`/`DimResolver` all live).
+
+## 2026-07-05 (round 2)
 
 ## Fixed
 

@@ -222,7 +222,7 @@ function topbar(base: string): string {
   const sep = '<span class="topbar__sep" aria-hidden="true">|</span>'
   const home = base === ""
   const peek = home
-    ? `\n    <button class="topbar__peek" type="button" data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE}<span>Peek at BIDSvue</span></button>`
+    ? `\n    <button class="topbar__peek" type="button" data-lightbox-src="${base}assets/splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE}<span>Peek at BIDSvue</span></button>`
     : ""
   return `
   <header class="topbar${home ? " topbar--home" : ""}">
