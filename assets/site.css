@@ -277,7 +277,6 @@ a:hover {
   color: var(--accent-text);
   background: var(--accent);
   border-radius: 0 0 16px 0; /* echoes the panel's bevel on its own right edge */
-  box-shadow: 8px 8px 30px -18px var(--ribbon-shadow);
   cursor: zoom-in;
   transition: background 0.15s;
 }
