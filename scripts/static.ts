@@ -50,3 +50,10 @@ export async function resolveFile(dist: string, pathname: string): Promise<Resol
 
   return { file, type: MIME[extname(file.name ?? rel)] ?? "application/octet-stream" }
 }
+
+/** The `404.html` response, mirroring how GitHub Pages serves missing paths. */
+export async function notFoundResponse(dist: string): Promise<Response> {
+  const nf = await resolveFile(dist, "/404.html")
+  if (nf) return new Response(nf.file, { status: 404, headers: { "content-type": nf.type } })
+  return new Response("Not found", { status: 404 })
+}

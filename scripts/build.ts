@@ -11,11 +11,12 @@
  * under a GitHub Pages project subpath (…/BIDSvue-demos/) with no base config.
  */
 
+import { readFileSync } from "node:fs"
 import { cp, mkdir, readdir, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { ARROW, escapeHtml, layout, mdToPanels } from "./render.ts"
+import { ARROW, HEAD_THEME_SCRIPT, escapeHtml, layout, mdToPanels } from "./render.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
@@ -88,10 +89,22 @@ function landingPage(): string {
 
 // ------- tutorial pages -----------------------------------------------------
 
+/** Intrinsic pixel size of a PNG from its IHDR header, or null for non-PNGs. */
+function pngSize(path: string): { w: number; h: number } | null {
+  try {
+    const b = readFileSync(path)
+    if (b.length < 24 || b.readUInt32BE(0) !== 0x89504e47) return null
+    return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) }
+  } catch {
+    return null
+  }
+}
+
 async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void> {
   const dir = join(ROOT, t.slug)
   const md = await Bun.file(join(dir, "README.md")).text()
-  const { title, leadHtml, panelsHtml } = mdToPanels(md)
+  // Resolve each figure's real size so the browser reserves its box (no CLS).
+  const { title, leadHtml, panelsHtml } = mdToPanels(md, (href) => pngSize(join(dir, href)))
 
   const chips = [...t.tags, t.duration]
     .map((c) => `<span class="chip">${escapeHtml(c)}</span>`)
@@ -133,6 +146,51 @@ function backArrow(): string {
   return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`
 }
 
+// ------- 404 ----------------------------------------------------------------
+
+// GitHub Pages serves 404.html for any missing path, at any depth, so it can't
+// rely on relative asset paths (they'd resolve against the wrong URL). It's
+// therefore self-contained: CSS inlined, favicon as a data URI, and the "home"
+// link resolved at runtime to the site root (origin + first path segment).
+async function notFoundPage(): Promise<string> {
+  const css = await Bun.file(join(ROOT, "assets", "site.css")).text()
+  const favicon = Buffer.from(
+    await Bun.file(join(ROOT, "assets", "favicon.png")).arrayBuffer(),
+  ).toString("base64")
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page not found — ${escapeHtml(config.title)} demos</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="data:image/png;base64,${favicon}" />
+<script>${HEAD_THEME_SCRIPT}</script>
+<style>${css}
+main.notfound { min-height: 82vh; display: grid; place-content: center; justify-items: center; text-align: center; gap: 0.4rem; padding: 2rem; }
+.notfound__code { font-size: clamp(4.5rem, 20vw, 10rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; color: var(--accent); }
+.notfound h1 { font-size: clamp(1.5rem, 4vw, 2.3rem); letter-spacing: -0.02em; }
+.notfound__lead { color: var(--fg-muted); max-width: 42ch; margin: 0.6rem auto 1.8rem; }
+.notfound__home { display: inline-flex; align-items: center; gap: 0.5ch; font-weight: 650; text-decoration: none; color: var(--accent-text); background: var(--accent); padding: 0.75rem 1.3rem; border-radius: 12px; box-shadow: 0 10px 30px -14px var(--accent-glow); }
+.notfound__home:hover { background: var(--accent-hover); color: var(--accent-text); }</style>
+</head>
+<body>
+<main class="notfound">
+  <p class="notfound__code">404</p>
+  <h1>This page wandered off.</h1>
+  <p class="notfound__lead">The page you’re looking for isn’t here — it may have moved, or never existed.</p>
+  <a class="notfound__home" data-home href="/">${ARROW} Back to the demos</a>
+</main>
+<script>
+(function(){
+  var seg = location.pathname.split("/")[1] || "";
+  document.querySelector("[data-home]").href = location.origin + "/" + (seg ? seg + "/" : "");
+})();
+</script>
+</body>
+</html>`
+}
+
 // ------- orchestration ------------------------------------------------------
 
 export async function build(): Promise<void> {
@@ -140,6 +198,7 @@ export async function build(): Promise<void> {
   await mkdir(DIST, { recursive: true })
 
   await Bun.write(join(DIST, "index.html"), landingPage())
+  await Bun.write(join(DIST, "404.html"), await notFoundPage())
   // GitHub Pages: skip Jekyll so `assets/` etc. are served verbatim.
   await Bun.write(join(DIST, ".nojekyll"), "")
 

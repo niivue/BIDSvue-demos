@@ -13,8 +13,10 @@ into an alternating column.
 
 - **`scripts/build.ts`** — Markdown + `site.config.ts` → `dist/`. Emits
   `dist/index.html` (hero + tutorial cards + tools), `dist/<slug>/index.html`
-  per tutorial, copies each tutorial's screenshots, copies `assets/`, writes
-  `.nojekyll`.
+  per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at
+  any Pages depth), copies each tutorial's screenshots, copies `assets/`, writes
+  `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries
+  intrinsic `width`/`height` → no layout shift.
 - **`scripts/render.ts`** — the Markdown → step-panels transform plus the HTML
   shell (topbar / footer / `layout()`). Also holds `escapeHtml`, `mdToPanels`,
   the accent list, and the no-FOUC head script.
@@ -22,9 +24,9 @@ into an alternating column.
   (`/__livereload`), and a source file watcher that rebuilds + reloads.
 - **`scripts/preview.ts`** — static server on `localhost:4173`; serves a
   prebuilt `dist/` exactly as Pages will (no watch/reload).
-- **`scripts/static.ts`** — shared MIME table + `resolveFile(dist, pathname)`
-  used by both dev and preview servers (single source of truth; also contains
-  the `dist/` traversal guard).
+- **`scripts/static.ts`** — shared MIME table + `resolveFile(dist, pathname)` +
+  `notFoundResponse` (serves `404.html`) used by both dev and preview servers
+  (single source of truth; also contains the `dist/` traversal guard).
 - **`scripts/render.test.ts`** — render fixtures: callout ordering, no
   alt/caption double-escape, first-figure media extraction.
 - **`scripts/static.test.ts`** — `resolveFile` index/content-type resolution +

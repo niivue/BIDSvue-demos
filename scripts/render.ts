@@ -74,7 +74,14 @@ export type ParsedDoc = {
   panelsHtml: string
 }
 
-export function mdToPanels(md: string): ParsedDoc {
+/**
+ * Resolves an image href to its intrinsic pixel size, so the build can emit
+ * `width`/`height` and the browser reserves the right box (no layout shift).
+ * Injected by the caller — keeps this module free of filesystem access.
+ */
+export type DimResolver = (href: string) => { w: number; h: number } | null
+
+export function mdToPanels(md: string, dims?: DimResolver): ParsedDoc {
   const tokens = marked.lexer(md) as TokenList
   const links = tokens.links
 
@@ -100,16 +107,18 @@ export function mdToPanels(md: string): ParsedDoc {
 
   const leadHtml = leadTokens.length ? renderTokens(leadTokens, links) : ""
 
-  const panels = sections.map((sec, i) => renderSection(sec, links, i))
+  const panels = sections.map((sec, i) => renderSection(sec, links, i, dims))
   return { title, leadHtml, panelsHtml: panels.join("\n") }
 }
 
-function figureHtml(img: Tokens.Image): string {
+function figureHtml(img: Tokens.Image, dims?: DimResolver): string {
   // marked already HTML-escapes image alt text (quotes included); href is not,
   // so only href needs escaping here — escaping the text again double-encodes.
+  const d = dims?.(img.href)
+  const size = d ? ` width="${d.w}" height="${d.h}"` : ""
   return `
       <figure class="shot">
-        <img src="${escapeHtml(img.href)}" alt="${img.text || ""}" loading="lazy" decoding="async" />
+        <img src="${escapeHtml(img.href)}"${size} alt="${img.text || ""}" loading="lazy" decoding="async" />
         ${img.text ? `<figcaption>${img.text}</figcaption>` : ""}
       </figure>`
 }
@@ -118,6 +127,7 @@ function renderSection(
   sec: { heading: Tokens.Heading; body: Token[] },
   links: TokenList["links"],
   index: number,
+  dims?: DimResolver,
 ): string {
   const stepMatch = sec.heading.text.match(/^(\d+)[.)]\s+(.*)$/)
 
@@ -144,7 +154,7 @@ function renderSection(
       }
       if (rest.length) {
         flush()
-        for (const img of rest) parts.push(figureHtml(img))
+        for (const img of rest) parts.push(figureHtml(img, dims))
       }
       continue
     }
@@ -169,7 +179,7 @@ function renderSection(
         <h2>${escapeHtml(rest)}</h2>
         ${body}
       </div>
-      <div class="step__media">${figureHtml(mediaImg)}</div>
+      <div class="step__media">${figureHtml(mediaImg, dims)}</div>
     </section>`
   }
 
@@ -234,7 +244,7 @@ function footer(): string {
   </footer>`
 }
 
-const HEAD_THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('bidsvue-demos:theme');if(t)document.documentElement.setAttribute('data-theme',t);var a=localStorage.getItem('bidsvue-demos:accent')||'${config.defaultAccent}';document.documentElement.setAttribute('data-accent',a);}catch(e){document.documentElement.setAttribute('data-accent','${config.defaultAccent}');}})();`
+export const HEAD_THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('bidsvue-demos:theme');if(t)document.documentElement.setAttribute('data-theme',t);var a=localStorage.getItem('bidsvue-demos:accent')||'${config.defaultAccent}';document.documentElement.setAttribute('data-accent',a);}catch(e){document.documentElement.setAttribute('data-accent','${config.defaultAccent}');}})();`
 
 export type LayoutOpts = {
   title: string

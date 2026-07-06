@@ -30,6 +30,18 @@ test("figure alt/caption are not double-escaped", () => {
   expect(panelsHtml).not.toContain("&amp;#39;")
 })
 
+test("figures get intrinsic width/height from the dimension resolver", () => {
+  const { panelsHtml } = mdToPanels(
+    `# T
+## Sec
+
+![shot](s.png)
+`,
+    () => ({ w: 800, h: 600 }),
+  )
+  expect(panelsHtml).toContain('width="800" height="600"')
+})
+
 test("a numbered step pulls its first figure into the media column", () => {
   const { panelsHtml } = mdToPanels(`# T
 ## 1. Do it

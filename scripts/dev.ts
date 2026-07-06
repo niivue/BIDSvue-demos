@@ -9,7 +9,7 @@ import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
 import { build } from "./build.ts"
-import { resolveFile } from "./static.ts"
+import { notFoundResponse, resolveFile } from "./static.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
@@ -69,7 +69,7 @@ const server = Bun.serve({
     }
 
     const r = await resolveFile(DIST, url.pathname)
-    if (!r) return new Response("Not found", { status: 404 })
+    if (!r) return notFoundResponse(DIST)
 
     // Inject the live-reload client into HTML responses; stream everything else.
     if (r.type.startsWith("text/html")) {

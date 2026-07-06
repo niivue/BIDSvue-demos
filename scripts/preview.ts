@@ -5,7 +5,7 @@
  */
 
 import { fileURLToPath } from "node:url"
-import { resolveFile } from "./static.ts"
+import { notFoundResponse, resolveFile } from "./static.ts"
 
 const DIST = fileURLToPath(new URL("../dist", import.meta.url))
 const PORT = Number(process.env.PORT ?? 4173)
@@ -14,7 +14,7 @@ const server = Bun.serve({
   port: PORT,
   async fetch(req) {
     const r = await resolveFile(DIST, new URL(req.url).pathname)
-    if (!r) return new Response("Not found", { status: 404 })
+    if (!r) return notFoundResponse(DIST)
     return new Response(r.file, { headers: { "content-type": r.type } })
   },
 })

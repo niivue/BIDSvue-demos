@@ -609,6 +609,7 @@ a:hover {
 }
 .shot img {
   width: 100%;
+  height: auto; /* derive height from the width/height attrs → reserved box, no CLS */
   border-radius: 10px;
 }
 .shot figcaption {
