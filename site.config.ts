@@ -92,6 +92,14 @@ const config: SiteConfig = {
       tags: ['MRS', 'DICOM', 'Spectra'],
       duration: '~15 min',
     },
+    {
+      slug: 'mri-physio-1',
+      title: 'Embedded physiological recordings',
+      summary:
+        'Import and inspect physiological measures acquired with MRI.',
+      tags: ['MRI', 'DICOM', 'Physio', 'AI'],
+      duration: '~15 min',
+    },
   ],
 
   tools: [
