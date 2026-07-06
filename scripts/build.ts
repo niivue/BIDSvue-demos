@@ -106,6 +106,15 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
   // Resolve each figure's real size so the browser reserves its box (no CLS).
   const { title, leadHtml, panelsHtml } = mdToPanels(md, (href) => pngSize(join(dir, href)))
 
+  // Warn (don't fail) on referenced local images that don't exist — catches
+  // typos and missing screenshots before they 404 on the live site.
+  for (const [, src] of panelsHtml.matchAll(/<img src="([^"]+)"/g)) {
+    if (/^https?:/.test(src)) continue
+    if (!(await Bun.file(join(dir, src)).exists())) {
+      console.warn(`  ⚠  ${t.slug}: referenced image not found — ${src}`)
+    }
+  }
+
   const chips = [...t.tags, t.duration]
     .map((c) => `<span class="chip">${escapeHtml(c)}</span>`)
     .join("")
