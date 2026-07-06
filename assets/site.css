@@ -345,7 +345,7 @@ a:hover {
 
 /* ------- Hero ------------------------------------------------------------- */
 .hero {
-  padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
+  padding-block: clamp(3rem, 4vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
   text-align: center;
 }
 .hero h1 {
@@ -371,11 +371,11 @@ a:hover {
 }
 /* ------- Section scaffolding --------------------------------------------- */
 .section {
-  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+  padding-block: clamp(1.75rem, 4vw, 3rem);
 }
 .section__head {
   max-width: 40rem;
-  margin-bottom: 2.2rem;
+  margin-bottom: 1.6rem;
 }
 .section__eyebrow {
   font-size: 0.78rem;
@@ -505,8 +505,8 @@ a:hover {
 
 /* ------- Tutorial page: step panels -------------------------------------- */
 .tut-hero {
-  /* extra top space so the top-left "back" link clears the nav ribbon */
-  padding-block: clamp(3.6rem, 6vw, 4.5rem) clamp(1.5rem, 3vw, 2.5rem);
+  /* just enough top space so the top-left "back" link clears the nav ribbon */
+  padding-block: clamp(3rem, 4.5vw, 3.75rem) clamp(1rem, 2.5vw, 1.75rem);
 }
 .tut-hero .back {
   display: inline-flex;
@@ -543,8 +543,8 @@ a:hover {
 .panels {
   display: flex;
   flex-direction: column;
-  gap: clamp(2rem, 5vw, 4rem);
-  padding-bottom: clamp(3rem, 7vw, 5rem);
+  gap: clamp(1.5rem, 3.5vw, 2.75rem);
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 /* A plain (prose-only) panel — e.g. Requirements. */
