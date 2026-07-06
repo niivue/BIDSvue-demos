@@ -276,7 +276,9 @@ a:hover {
   font-size: 0.95rem;
   color: var(--accent-text);
   background: var(--accent);
+  border: none; /* kill the native <button> outset border (the harsh rim) */
   border-radius: 0 0 16px 0; /* echoes the panel's bevel on its own right edge */
+  box-shadow: 8px 8px 30px -18px var(--ribbon-shadow); /* same feather as the panel */
   cursor: zoom-in;
   transition: background 0.15s;
 }
