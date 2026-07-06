@@ -39,8 +39,6 @@ jobs:
         run: bun run build
 
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true # turn Pages on (GitHub Actions source) if not already
 
       - uses: actions/upload-pages-artifact@v3
         with:
