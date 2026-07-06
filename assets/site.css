@@ -369,6 +369,32 @@ a:hover {
   color: var(--fg-muted);
   font-size: 1.08rem;
 }
+/* Discoverable, hidden-by-default trigger that opens the app splash in the
+   lightbox. `zoom-in` cursor echoes the screenshot figures. */
+.hero__peek {
+  margin-top: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55ch;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  padding: 0.55rem 1.05rem;
+  border-radius: 999px;
+  cursor: zoom-in;
+  transition: background 0.15s, border-color 0.15s, transform 0.12s;
+}
+.hero__peek:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+}
+.hero__peek:active {
+  transform: translateY(1px);
+}
+
 /* ------- Section scaffolding --------------------------------------------- */
 .section {
   padding-block: clamp(1.75rem, 4vw, 3rem);

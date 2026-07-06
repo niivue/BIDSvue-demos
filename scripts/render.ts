@@ -211,15 +211,19 @@ function renderSection(
 const SUN = `<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`
 const MOON = `<svg class="moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>`
 export const ARROW = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`
+export const MAXIMIZE = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>`
 
 const ACCENTS = ["orange", "sage", "garnet", "periwinkle", "violet", "indigo"]
 
-// The floating nav ribbon (top-left): brand + three links.
+// The floating nav ribbon (top-left): brand + three links. On the home page
+// (base === "") the brand opens the app splash in the lightbox instead of
+// navigating; elsewhere it links home. The href stays as a no-JS fallback.
 function topbar(base: string): string {
   const sep = '<span class="topbar__sep" aria-hidden="true">|</span>'
+  const brandSplash = base === "" ? ' data-lightbox-src="splash.png" data-lightbox-alt="The BIDSvue launch screen"' : ""
   return `
   <header class="topbar">
-    <a class="brand" href="${base}index.html">${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
+    <a class="brand" href="${base}index.html"${brandSplash}>${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
     ${sep}
     <a class="topnav-link" href="${base}index.html#tutorials">Tutorials</a>
     ${sep}

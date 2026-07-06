@@ -75,13 +75,16 @@
 // call on the previous one.
 ;(() => {
   const shots = document.querySelectorAll(".shot")
-  if (!shots.length) return
+  // Elements that open an arbitrary image in the lightbox (e.g. the home-page
+  // splash trigger), so the feature isn't limited to `.shot` figures.
+  const triggers = document.querySelectorAll("[data-lightbox-src]")
+  if (!shots.length && !triggers.length) return
 
   const box = document.createElement("div")
   box.className = "lightbox"
   box.setAttribute("role", "dialog")
   box.setAttribute("aria-modal", "true")
-  box.setAttribute("aria-label", "Enlarged screenshot")
+  box.setAttribute("aria-label", "Enlarged image")
   box.innerHTML = '<figure class="lightbox__frame"><img alt="" /></figure>'
   document.body.appendChild(box)
   const big = box.querySelector("img")
@@ -110,6 +113,13 @@
         e.preventDefault()
         trigger()
       }
+    })
+  })
+
+  triggers.forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault() // e.g. the brand link would otherwise navigate home
+      open(el.getAttribute("data-lightbox-src"), el.getAttribute("data-lightbox-alt"))
     })
   })
 
