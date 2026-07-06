@@ -4,7 +4,7 @@ Hands-on tutorials for [BIDSvue](https://github.com/niivue/BIDSvue) — creating
 
 The tutorials are written as plain, GitHub-readable Markdown. A small build step compiles them into a styled static site (light/dark themes, BIDSvue's accent colors, and each numbered step rendered as its own panel) that is published to **GitHub Pages**.
 
-> 🌐 **Live site:** https://niivue.github.io/BIDSvue-demos/ *(available once GitHub Pages is enabled for this repo — see below)*
+> 🌐 **Live site:** https://bidsvue.org
 
 ## Tutorials
 

@@ -187,17 +187,8 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
   <p class="notfound__code">404</p>
   <h1>This page wandered off.</h1>
   <p class="notfound__lead">The page you’re looking for isn’t here — it may have moved, or never existed.</p>
-  <a class="notfound__home" data-home href="/">${ARROW} Back to the demos</a>
+  <a class="notfound__home" href="/">${ARROW} Back to the demos</a>
 </main>
-<script>
-// Resolve "home" to the project-pages root (origin + first path segment, e.g.
-// /BIDSvue-demos/). Assumes a GitHub project-pages deploy; a user/org root site
-// or local preview would want just "/".
-(function(){
-  var seg = location.pathname.split("/")[1] || "";
-  document.querySelector("[data-home]").href = location.origin + "/" + (seg ? seg + "/" : "");
-})();
-</script>
 </body>
 </html>`
 }
@@ -212,6 +203,9 @@ export async function build(): Promise<void> {
   await Bun.write(join(DIST, "404.html"), await notFoundPage())
   // GitHub Pages: skip Jekyll so `assets/` etc. are served verbatim.
   await Bun.write(join(DIST, ".nojekyll"), "")
+  // Custom apex domain. Emitting CNAME on every deploy keeps Pages from
+  // clearing the domain on an Actions redeploy.
+  await Bun.write(join(DIST, "CNAME"), "bidsvue.org\n")
 
   for (const t of config.tutorials) await buildTutorial(t)
 
