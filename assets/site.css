@@ -259,9 +259,9 @@ a:hover {
   color: var(--accent);
 }
 
-/* Home-page "peek" drawer: an accent tab tucked BEHIND the panel (lower
-   z-index) whose left edge slides under the panel's right edge and emerges to
-   the right. Same feathered accent shadow as the panel — no hard outline. */
+/* Home-page "peek" drawer: a tab tucked BEHIND the panel (lower z-index) whose
+   left edge slides under the panel's right edge and emerges to the right.
+   Styled like the tag chips — accent text on a muted accent fill. */
 .topbar__peek {
   position: relative;
   z-index: 1;
@@ -273,8 +273,8 @@ a:hover {
   font: inherit;
   font-weight: 650;
   font-size: 0.95rem;
-  color: var(--accent-text);
-  background: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
   border: none; /* kill the native <button> outset border (the harsh rim) */
   border-radius: 0 0 16px 0; /* echoes the panel's bevel on its own right edge */
   box-shadow: 8px 8px 30px -18px var(--ribbon-shadow); /* same feather as the panel */
@@ -282,7 +282,7 @@ a:hover {
   transition: background 0.15s;
 }
 .topbar__peek:hover {
-  background: var(--accent-hover);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 .topbar__peek svg {
   width: 15px;
