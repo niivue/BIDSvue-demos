@@ -76,6 +76,14 @@ const config: SiteConfig = {
       tags: ['PET', 'PET2BIDS', 'Edit', 'Share'],
       duration: '~15 min',
     },
+    {
+      slug: 'datalad-1',
+      title: 'Explore a DataLad dataset',
+      summary:
+        'Clone a huge remote dataset and fetch only the files you need.',
+      tags: ['DataLad', 'Clone', 'Timeseries', 'Dashboard'],
+      duration: '~15 min',
+    },
   ],
 
   tools: [
