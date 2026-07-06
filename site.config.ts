@@ -68,6 +68,14 @@ const config: SiteConfig = {
       tags: ['MEG', 'MNE-BIDS', 'De-identify', 'Share'],
       duration: '~15 min',
     },
+    {
+      slug: 'pet-pet2bids-1',
+      title: 'Convert PET to BIDS',
+      summary:
+        'Use PET2BIDS to create, edit, and share a BIDS dataset.',
+      tags: ['PET', 'PET2BIDS', 'Edit', 'Share'],
+      duration: '~15 min',
+    },
   ],
 
   tools: [
