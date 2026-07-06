@@ -1,7 +1,20 @@
+// This site ships no service worker. If a stale one is registered on this
+// origin — e.g. left by a different app previously served on the same localhost
+// port — it hijacks navigations and fetches, eventually throwing "Failed to
+// fetch" from its own sw.js and locking the page up. Unregister the SW scoped
+// to this page (getRegistration() → current scope, so it won't disturb other
+// apps sharing the origin).
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .getRegistration()
+    .then((reg) => reg && reg.unregister())
+    .catch(() => {})
+}
+
 // Theme + accent controls. The <head> inline snippet has already applied the
 // stored preferences before first paint (no flash); this file only wires up
 // the interactive toggle + swatches and keeps them in sync.
-(() => {
+;(() => {
   const root = document.documentElement
   const KEY_THEME = "bidsvue-demos:theme" // 'light' | 'dark' | null(system)
   const KEY_ACCENT = "bidsvue-demos:accent"
