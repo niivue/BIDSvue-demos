@@ -11,12 +11,13 @@
  * under a GitHub Pages project subpath (…/BIDSvue-demos/) with no base config.
  */
 
-import { cp, mkdir, readdir, rm, stat } from "node:fs/promises"
+import { cp, mkdir, readdir, rm } from "node:fs/promises"
 import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
 import { ARROW, escapeHtml, layout, mdToPanels } from "./render.ts"
 
-const ROOT = new URL("..", import.meta.url).pathname
+const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
 
 // ------- landing page -------------------------------------------------------
@@ -120,11 +121,11 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
   await mkdir(outDir, { recursive: true })
   await Bun.write(join(outDir, "index.html"), html)
 
-  // Copy every asset in the tutorial folder except the source Markdown.
+  // Copy every asset in the tutorial folder except the source Markdown and
+  // dotfiles. `recursive` handles both files and nested asset directories.
   for (const entry of await readdir(dir)) {
     if (entry === "README.md" || entry.startsWith(".")) continue
-    const src = join(dir, entry)
-    if ((await stat(src)).isFile()) await cp(src, join(outDir, entry))
+    await cp(join(dir, entry), join(outDir, entry), { recursive: true })
   }
 }
 

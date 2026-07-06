@@ -25,6 +25,10 @@ into an alternating column.
 - **`scripts/static.ts`** — shared MIME table + `resolveFile(dist, pathname)`
   used by both dev and preview servers (single source of truth; also contains
   the `dist/` traversal guard).
+- **`scripts/render.test.ts`** — render fixtures: callout ordering, no
+  alt/caption double-escape, first-figure media extraction.
+- **`scripts/static.test.ts`** — `resolveFile` index/content-type resolution +
+  traversal / malformed-encoding rejection.
 - **`assets/site.css`** — the design system: theme tokens, the two floating
   ribbons, panels/cards, screenshot lightbox.
 - **`assets/theme.js`** — theme toggle + accent picker + screenshot lightbox.
@@ -41,6 +45,11 @@ into an alternating column.
 - `bun run typecheck` — `tsc --noEmit`. **Enforced on commit** via the
   `.githooks/pre-commit` hook (activated by `bun install`'s `prepare` script,
   which sets `core.hooksPath` to `.githooks`). Bypass with `--no-verify`.
+- `bun run test` — `bun test` (runs `scripts/*.test.ts`).
+
+CI (`.github/workflows/deploy.yml`) runs typecheck + test + build before deploy.
+Editing `site.config.ts` needs a `bun run dev` restart — `build.ts` caches the
+config import, so it is not hot-reloaded.
 
 ## Authoring convention (KEEP GitHub-native)
 
@@ -55,6 +64,10 @@ Tutorials stay ordinary Markdown — no frontmatter, no build-only markup.
   render as callouts.
 - Register every tutorial in `site.config.ts` under `tutorials` (slug, title,
   summary, tags, duration). The slug is the folder name and the URL path.
+
+**Trusted-content model:** all Markdown is owner-authored and PR-reviewed, so it
+is rendered without sanitization by design (raw HTML / links pass through). See
+`audit_response.md` before adding any untrusted-input path.
 
 ## UI layout (current)
 
@@ -95,38 +108,6 @@ Two **floating ribbons**, not full-width bars:
 - Enable once under **Settings → Pages → Source → GitHub Actions**.
 - The build emits `.nojekyll` so `assets/` is served verbatim.
 
-## Audit outcomes (2026-07-05)
+## Audit history
 
-Three-agent audit (security/bugs, refactor, docs). Priority was **lean code over
-defensive code**. Net ≈ -54 lines despite adding `static.ts`. Applied:
-
-- **Traversal guard** in `static.ts::resolveFile` — dev/preview servers no longer
-  serve files outside `dist/` (verified: encoded `..` → 404). Also catches
-  malformed percent-encoding.
-- **Unified static serving** — one MIME table + resolver shared by dev/preview
-  (previously duplicated and already drifting; `.gif` was missing from preview).
-- **SSE leak fix** — `dev.ts` `cancel()` now prunes its controller from `clients`.
-- **Dead code removed**: `.btn`/`.btn--*` CSS block (~37 lines), `.section__head.center`,
-  the empty dark-mode placeholder rule, `LayoutOpts.extraHead` + `bodyClass`,
-  `alertCallout`'s unused `links` param, `ALERT_META.label` (→ `ALERT_ICON` map),
-  `site.config.ts` `demosRepoUrl`, the `headingHtml` alias. Simplified
-  `paragraphImages`; folded `export ARROW`.
-- **Consistency**: topbar now escapes `config.title` / URLs like every other
-  interpolation.
-
-Deliberately **kept** (not over-defensive): `.prose kbd` / `.prose blockquote`
-base styles (valid any time an author writes them); the watch signature gate;
-the no-FOUC head script; the browser-opener / `watch` try/catch.
-
-Follow-ups since done:
-
-- Added `@types/bun` + `typescript` devDeps; `tsconfig` now uses
-  `"types": ["bun"]`. `bun run typecheck` passes clean and is enforced on commit
-  (see the pre-commit hook above).
-
-Known non-blockers (left as-is):
-
-- **Authoring constraints** (Low): two `## N.` steps sharing a number produce
-  duplicate `id="step-N"`; reference-style links **inside** a `> [!NOTE]` callout
-  don't resolve (the callout body is parsed in isolation). Neither occurs in
-  current content; fix only if it comes up.
+Audit history + trust-model decisions live in `audit_response.md`.

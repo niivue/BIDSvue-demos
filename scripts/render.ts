@@ -33,7 +33,6 @@ function renderTokens(tokens: Token[], links: TokenList["links"]): string {
   return marked.parser(list)
 }
 
-/** A paragraph that is just one or more images (a "figure" line). */
 /** A paragraph token that is nothing but image(s) (a "figure" line). */
 function paragraphImages(tok: Token): Tokens.Image[] | null {
   if (tok.type !== "paragraph") return null
@@ -105,6 +104,16 @@ export function mdToPanels(md: string): ParsedDoc {
   return { title, leadHtml, panelsHtml: panels.join("\n") }
 }
 
+function figureHtml(img: Tokens.Image): string {
+  // marked already HTML-escapes image alt text (quotes included); href is not,
+  // so only href needs escaping here — escaping the text again double-encodes.
+  return `
+      <figure class="shot">
+        <img src="${escapeHtml(img.href)}" alt="${img.text || ""}" loading="lazy" decoding="async" />
+        ${img.text ? `<figcaption>${img.text}</figcaption>` : ""}
+      </figure>`
+}
+
 function renderSection(
   sec: { heading: Tokens.Heading; body: Token[] },
   links: TokenList["links"],
@@ -112,48 +121,55 @@ function renderSection(
 ): string {
   const stepMatch = sec.heading.text.match(/^(\d+)[.)]\s+(.*)$/)
 
-  // Pull out figures (image-only paragraphs) and callouts; keep prose apart.
-  const figures: Tokens.Image[] = []
-  const proseTokens: Token[] = []
-  const calloutHtml: string[] = []
+  // Render the body in document order — prose and callouts stay interleaved
+  // where the author put them. For a numbered step, the FIRST figure is pulled
+  // out to the two-column media slot; any later figures stay inline.
+  const parts: string[] = []
+  let proseRun: Token[] = []
+  const flush = () => {
+    if (proseRun.length) {
+      parts.push(renderTokens(proseRun, links))
+      proseRun = []
+    }
+  }
+  let mediaImg: Tokens.Image | null = null
 
   for (const tok of sec.body) {
     const imgs = paragraphImages(tok)
-    if (imgs && imgs.length) {
-      figures.push(...imgs)
+    if (imgs?.length) {
+      let rest = imgs
+      if (stepMatch && !mediaImg) {
+        mediaImg = imgs[0]
+        rest = imgs.slice(1)
+      }
+      if (rest.length) {
+        flush()
+        for (const img of rest) parts.push(figureHtml(img))
+      }
       continue
     }
     const callout = alertCallout(tok)
     if (callout) {
-      calloutHtml.push(callout)
+      flush()
+      parts.push(callout)
       continue
     }
-    proseTokens.push(tok)
+    proseRun.push(tok)
   }
-
-  const prose = proseTokens.length ? renderTokens(proseTokens, links) : ""
-  const callouts = calloutHtml.join("\n")
-
-  const figureHtml = (img: Tokens.Image) => `
-      <figure class="shot">
-        <img src="${escapeHtml(img.href)}" alt="${escapeHtml(img.text || "")}" loading="lazy" decoding="async" />
-        ${img.text ? `<figcaption>${escapeHtml(img.text)}</figcaption>` : ""}
-      </figure>`
+  flush()
+  const body = parts.join("\n")
 
   // Numbered step with a screenshot → two-column alternating layout.
-  if (stepMatch && figures.length) {
+  if (stepMatch && mediaImg) {
     const [, num, rest] = stepMatch
-    const extraFigures = figures.slice(1).map(figureHtml).join("")
     return `
     <section class="step" id="step-${num}">
       <div class="step__body prose">
         <span class="step__num" aria-hidden="true">${num}</span>
         <h2>${escapeHtml(rest)}</h2>
-        ${prose}
-        ${callouts}
-        ${extraFigures}
+        ${body}
       </div>
-      <div class="step__media">${figureHtml(figures[0])}</div>
+      <div class="step__media">${figureHtml(mediaImg)}</div>
     </section>`
   }
 
@@ -165,21 +181,17 @@ function renderSection(
       <div class="prose">
         <span class="step__num" aria-hidden="true">${num}</span>
         <h2>${escapeHtml(rest)}</h2>
-        ${prose}
-        ${callouts}
+        ${body}
       </div>
     </section>`
   }
 
   // Non-numbered heading (Requirements, etc.) → prose panel.
-  const anyFigures = figures.map(figureHtml).join("")
   return `
     <section class="panel" id="section-${index}">
       <div class="prose">
         <h2>${escapeHtml(sec.heading.text)}</h2>
-        ${prose}
-        ${callouts}
-        ${anyFigures}
+        ${body}
       </div>
     </section>`
 }

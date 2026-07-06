@@ -32,6 +32,9 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
+      - name: Test
+        run: bun test
+
       - name: Build static site
         run: bun run build
 

@@ -62,10 +62,12 @@ bun run dev        # build + serve at http://localhost:5173 with live reload
 bun run build      # compile the static site into dist/
 bun run preview    # build, then serve dist/ exactly as Pages will
 bun run typecheck  # tsc --noEmit
+bun run test       # bun test
 ```
 
-Editing any Markdown file, a screenshot, `site.config.ts`, or the assets while
-`bun run dev` is running rebuilds the site and reloads the browser.
+Editing any Markdown file, a screenshot, or the assets while `bun run dev` is
+running rebuilds the site and reloads the browser. Changing `site.config.ts`
+needs a dev restart (the running process keeps the cached config module).
 
 A version-controlled **pre-commit hook** (`.githooks/pre-commit`) runs
 `bun run typecheck` and blocks commits that don't type-check. `bun install`

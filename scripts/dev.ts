@@ -6,11 +6,12 @@
 
 import { readdirSync, statSync, watch } from "node:fs"
 import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
 import { build } from "./build.ts"
 import { resolveFile } from "./static.ts"
 
-const ROOT = new URL("..", import.meta.url).pathname
+const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
 const PORT = Number(process.env.PORT ?? 5173)
 
@@ -99,10 +100,11 @@ if (!process.env.NO_OPEN) {
 }
 
 // Watch ONLY source locations — never the repo root (the build writes dist/
-// inside it, which would loop).
+// inside it, which would loop). `site.config.ts` is deliberately NOT watched:
+// build.ts imports it once, so a running process keeps the cached module and
+// config edits wouldn't take effect anyway — they need a dev restart.
 const watchTargets = [
   join(ROOT, "assets"),
-  join(ROOT, "site.config.ts"),
   ...config.tutorials.map((t) => join(ROOT, t.slug)),
 ]
 

@@ -4,9 +4,10 @@
  * GitHub Pages will serve.
  */
 
+import { fileURLToPath } from "node:url"
 import { resolveFile } from "./static.ts"
 
-const DIST = new URL("../dist", import.meta.url).pathname
+const DIST = fileURLToPath(new URL("../dist", import.meta.url))
 const PORT = Number(process.env.PORT ?? 4173)
 
 const server = Bun.serve({
