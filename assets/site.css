@@ -52,6 +52,11 @@ a {
   --accent-soft: rgba(191, 87, 0, 0.13);
   --accent-glow: rgba(191, 87, 0, 0.32);
 
+  /* Floating-ribbon drop shadow: black tinted with the accent. A plain black
+     shadow vanishes on the dark theme's near-black surfaces, so the accent
+     keeps it visible; the dark blocks below lean it further toward the accent. */
+  --ribbon-shadow: color-mix(in srgb, color-mix(in srgb, var(--accent) 35%, #000) 55%, transparent);
+
   /* Type + rhythm. BIDSvue uses the platform UI font; we keep that identity
      and just push weight/tracking on display headings for a branded feel. */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -83,6 +88,8 @@ a {
 
   --accent-soft: rgba(191, 87, 0, 0.2);
   --accent-glow: rgba(191, 87, 0, 0.45);
+  /* Lean the ribbon shadow toward the accent so it reads on dark surfaces. */
+  --ribbon-shadow: color-mix(in srgb, color-mix(in srgb, var(--accent) 75%, #000) 55%, transparent);
 
   color-scheme: dark;
 }
@@ -102,6 +109,7 @@ a {
 
     --accent-soft: rgba(191, 87, 0, 0.2);
     --accent-glow: rgba(191, 87, 0, 0.45);
+    --ribbon-shadow: color-mix(in srgb, color-mix(in srgb, var(--accent) 75%, #000) 55%, transparent);
 
     color-scheme: dark;
   }
@@ -209,7 +217,7 @@ a:hover {
   border-bottom: 1px solid var(--border-subtle);
   border-right: 1px solid var(--border-subtle);
   border-radius: 0 0 16px 0; /* lower-right beveled; other corners flush */
-  box-shadow: 8px 8px 30px -18px rgba(0, 0, 0, 0.3);
+  box-shadow: 8px 8px 30px -18px var(--ribbon-shadow);
 }
 .topbar__sep {
   color: var(--fg-faint);
@@ -779,7 +787,7 @@ a:hover {
   border-top: 1px solid var(--border-subtle);
   border-left: 1px solid var(--border-subtle);
   border-radius: 14px 0 0 0; /* top-left only */
-  box-shadow: -8px -8px 30px -18px rgba(0, 0, 0, 0.3);
+  box-shadow: -8px -8px 30px -18px var(--ribbon-shadow);
 }
 
 /* ------- Responsive ------------------------------------------------------- */
