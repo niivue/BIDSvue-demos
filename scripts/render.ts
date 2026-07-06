@@ -225,15 +225,17 @@ function topbar(base: string): string {
     ? `\n    <button class="topbar__peek" type="button" data-lightbox-src="${base}assets/splash.png" data-lightbox-alt="The BIDSvue launch screen">${MAXIMIZE}<span>Peek at BIDSvue</span></button>`
     : ""
   return `
-  <header class="topbar${home ? " topbar--home" : ""}">
-    <a class="brand" href="${base}index.html">${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
-    ${sep}
-    <a class="topnav-link" href="${base}index.html#tutorials">Tutorials</a>
-    ${sep}
-    <a class="topnav-link" href="${escapeHtml(config.appUrl)}">Source</a>
-    ${sep}
-    <a class="topnav-link" href="${escapeHtml(config.releasesUrl)}">Download</a>${peek}
-  </header>`
+  <div class="topbar">
+    <header class="topbar__panel">
+      <a class="brand" href="${base}index.html">${escapeHtml(config.title)}<span class="brand__sub">demos</span></a>
+      ${sep}
+      <a class="topnav-link" href="${base}index.html#tutorials">Tutorials</a>
+      ${sep}
+      <a class="topnav-link" href="${escapeHtml(config.appUrl)}">Source</a>
+      ${sep}
+      <a class="topnav-link" href="${escapeHtml(config.releasesUrl)}">Download</a>
+    </header>${peek}
+  </div>`
 }
 
 // The floating controls tab (bottom-right): accent swatches + theme toggle.

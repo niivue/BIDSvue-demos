@@ -201,12 +201,20 @@ a:hover {
   padding-inline: clamp(1.1rem, 4vw, 2.5rem);
 }
 
-/* ------- Nav ribbon (floats top-left; only the bottom-right corner beveled) */
+/* ------- Nav ribbon. `.topbar` is a bare positioning wrapper; `.topbar__panel`
+   is the visible toolbar and looks identical on every page. On the home page a
+   `.topbar__peek` drawer sits BEHIND the panel and slides out to the right. */
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 50;
+  display: flex;
+  align-items: stretch;
+}
+.topbar__panel {
+  position: relative;
+  z-index: 2; /* draws over the peek drawer tucked behind it */
   display: flex;
   align-items: baseline;
   gap: 0.7rem;
@@ -251,28 +259,25 @@ a:hover {
   color: var(--accent);
 }
 
-/* Home-page "peek" drawer: an accent tab that slides out of the ribbon's right
-   edge. It fills the ribbon's full height (negative margins cancel the padding)
-   and takes over the bottom-right bevel, so it reads as one shape with the
-   ribbon — a drawer pulled out of the tool panel. */
-.topbar--home {
-  border-bottom-right-radius: 0;
-  border-right: 0;
-  padding-right: 0;
-}
+/* Home-page "peek" drawer: an accent tab tucked BEHIND the panel (lower
+   z-index) whose left edge slides under the panel's right edge and emerges to
+   the right. Same feathered accent shadow as the panel — no hard outline. */
 .topbar__peek {
+  position: relative;
+  z-index: 1;
   align-self: stretch;
   display: inline-flex;
   align-items: center;
   gap: 0.5ch;
-  margin: -0.62rem 0 calc(-0.7rem - 1px) 0.9rem; /* fill top→bottom incl. border */
-  padding-inline: 1.05rem;
+  margin-left: -1rem; /* left edge tucks behind the panel */
+  padding: 0 1.05rem 0 1.5rem; /* keep the label clear of the overlap */
   font: inherit;
   font-weight: 650;
   font-size: 0.95rem;
   color: var(--accent-text);
   background: var(--accent);
-  border-bottom-right-radius: 16px;
+  border-radius: 0 0 16px 0; /* echoes the panel's bevel on its own right edge */
+  box-shadow: 8px 8px 30px -18px var(--ribbon-shadow);
   cursor: zoom-in;
   transition: background 0.15s;
 }
@@ -283,16 +288,10 @@ a:hover {
   width: 15px;
   height: 15px;
 }
-/* Not enough room for the drawer on small screens — hide it and give the ribbon
-   its own bevel back. */
+/* No room for the drawer on small screens — hide it. The panel is unchanged. */
 @media (max-width: 620px) {
   .topbar__peek {
     display: none;
-  }
-  .topbar--home {
-    border-bottom-right-radius: 16px;
-    border-right: 1px solid var(--border-subtle);
-    padding-right: 1.2rem;
   }
 }
 
@@ -841,7 +840,7 @@ a:hover {
 }
 /* Keep the floating nav tab compact on small screens. */
 @media (max-width: 480px) {
-  .topbar {
+  .topbar__panel {
     gap: 0.85rem;
     padding: 0.55rem 0.85rem 0.6rem;
   }
