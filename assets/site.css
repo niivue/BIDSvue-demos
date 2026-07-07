@@ -64,7 +64,9 @@ a {
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     "Cascadia Code", Consolas, monospace;
 
-  --maxw: 1120px;
+  /* Grows a bit on large canvases (13" ≈ 1440px viewport stays ~1120), capped
+     so text keeps a readable measure and nothing sprawls. */
+  --maxw: clamp(1120px, 78vw, 1440px);
   --radius: 14px;
   --radius-lg: 20px;
 
@@ -435,10 +437,22 @@ a:hover {
 }
 
 /* ------- Tutorial cards --------------------------------------------------- */
+/* Explicit column counts (1 → 2 → 3, capped at 3) so the six cards always land
+   on clean rows; on wider canvases the cards grow rather than adding a column. */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1.2rem;
+}
+@media (min-width: 560px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 .card {
   display: flex;
@@ -512,10 +526,28 @@ a:hover {
 }
 
 /* ------- Tools grid ------------------------------------------------------- */
+/* 1 → 2 → 3 → 4 columns (capped at 4). The 12 tools divide evenly at each stop
+   (12/2, /3, /4), and the tiles widen — rather than adding a ragged 5th column
+   — as the canvas grows. */
 .tools {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.9rem;
+}
+@media (min-width: 480px) {
+  .tools {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 700px) {
+  .tools {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 920px) {
+  .tools {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .tool {
   padding: 1.1rem 1.2rem;
