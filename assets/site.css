@@ -64,9 +64,11 @@ a {
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     "Cascadia Code", Consolas, monospace;
 
-  /* Grows a bit on large canvases (13" ≈ 1440px viewport stays ~1120), capped
-     so text keeps a readable measure and nothing sprawls. */
-  --maxw: clamp(1120px, 78vw, 1440px);
+  /* Grows on large canvases (13" ≈ 1440px viewport stays ~1120), capped so the
+     grid-based landing fills wide/4K screens without sprawling. Text-heavy
+     tutorial pages cap tighter (--maxw-text) to keep a readable measure. */
+  --maxw: clamp(1120px, 78vw, 1680px);
+  --maxw-text: 1200px;
   --radius: 14px;
   --radius-lg: 20px;
 
@@ -549,6 +551,11 @@ a:hover {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+@media (min-width: 1560px) {
+  .tools {
+    grid-template-columns: repeat(6, 1fr); /* 12 tools → 2 rows on wide/4K */
+  }
+}
 .tool {
   padding: 1.1rem 1.2rem;
   border-radius: var(--radius);
@@ -574,6 +581,12 @@ a:hover {
 }
 
 /* ------- Tutorial page: step panels -------------------------------------- */
+/* Tutorial pages are text-heavy, so cap them tighter than the wide landing to
+   keep prose at a readable measure on large/4K screens. */
+.tut-hero,
+.container:has(> .panels) {
+  max-width: var(--maxw-text);
+}
 .tut-hero {
   /* just enough top space so the top-left "back" link clears the nav ribbon */
   padding-block: clamp(3rem, 4.5vw, 3.75rem) clamp(1rem, 2.5vw, 1.75rem);
