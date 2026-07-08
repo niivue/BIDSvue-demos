@@ -20,6 +20,12 @@ html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
+  /* Scale the whole type/space system a step or two up on large canvases so the
+     page fills wide/4K screens instead of reading as tiny text in empty bands.
+     Nothing changes at/under ~1600px (stays 16px), grows to 19px past ~2800px.
+     Almost everything is in rem, so this lifts headings, body, cards and gaps
+     together — the way Linear et al. scale up when there's room. */
+  font-size: clamp(16px, 12px + 0.25vw, 19px);
 }
 img,
 picture,
@@ -67,7 +73,7 @@ a {
   /* Grows on large canvases (13" ≈ 1440px viewport stays ~1120), capped so the
      grid-based landing fills wide/4K screens without sprawling. Text-heavy
      tutorial pages cap tighter (--maxw-text) to keep a readable measure. */
-  --maxw: clamp(1120px, 78vw, 1680px);
+  --maxw: clamp(1120px, 78vw, 1800px);
   --maxw-text: 1200px;
   --radius: 14px;
   --radius-lg: 20px;
@@ -172,7 +178,7 @@ body {
   color: var(--fg-base);
   background: var(--bg-base);
   line-height: 1.6;
-  font-size: 17px;
+  font-size: 1.0625rem; /* 17px at the 16px base; scales with the root clamp above */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
