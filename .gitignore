@@ -3,3 +3,11 @@ dist/
 .DS_Store
 audit_temp.md
 audit_response.md
+
+# Scratch screenshots / images dropped in the repo root (tutorial screenshots
+# live in their tutorial folders; the only root-level images are in assets/).
+/*.png
+/*.jpg
+/*.jpeg
+SCR-*.png
+Screenshot*.png

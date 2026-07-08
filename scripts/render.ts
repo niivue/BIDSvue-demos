@@ -72,6 +72,8 @@ export type ParsedDoc = {
   title: string
   leadHtml: string
   panelsHtml: string
+  /** Raw (un-escaped) hrefs of every image in the doc — for missing-file checks. */
+  imageRefs: string[]
 }
 
 /**
@@ -84,6 +86,13 @@ export type DimResolver = (href: string) => { w: number; h: number } | null
 export function mdToPanels(md: string, dims?: DimResolver): ParsedDoc {
   const tokens = marked.lexer(md) as TokenList
   const links = tokens.links
+
+  // Collect every image href from the token pass (raw, before HTML-escaping) so
+  // the caller can check files by their real names — covers lead and panels alike.
+  const imageRefs: string[] = []
+  marked.walkTokens(tokens, (t) => {
+    if (t.type === "image") imageRefs.push((t as Tokens.Image).href)
+  })
 
   let title = ""
   const leadTokens: Token[] = []
@@ -108,7 +117,7 @@ export function mdToPanels(md: string, dims?: DimResolver): ParsedDoc {
   const leadHtml = leadTokens.length ? renderTokens(leadTokens, links) : ""
 
   const panels = sections.map((sec, i) => renderSection(sec, links, i, dims))
-  return { title, leadHtml, panelsHtml: panels.join("\n") }
+  return { title, leadHtml, panelsHtml: panels.join("\n"), imageRefs }
 }
 
 function figureHtml(img: Tokens.Image, dims?: DimResolver): string {

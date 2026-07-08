@@ -57,7 +57,7 @@ Two **floating ribbons**, not full-width bars:
 - **No-FOUC theme init.** The inline `<script>` in `<head>` sets `data-theme` / `data-accent` from `localStorage` before first paint. Keep it inline and in the head.
 - **Adjacent IIFEs in `theme.js` need a separating `;`.** The second IIFE is prefixed with a leading `;` — without it ASI parses it as a call on the first IIFE's return value. This was a real bug; don't remove the semicolon.
 - **The duplicate `html { font-size }` is a `round()` fallback, not a mistake.** The first (plain `clamp`) line is the fallback for browsers without CSS `round()`; the second wraps the same clamp in `round(down, …, 1px)` so the scaled root size snaps to a whole pixel (keeping the rem cascade on integers). Don't collapse the "duplicate."
-- **All asset/link paths are relative.** `layout()` takes a `base` (`""` at root, `"../"` one level deep) so the output works at the site root (the custom domain `bidsvue.org`) or any subpath with no base config. The build also emits a `CNAME` file (`bidsvue.org`) so an Actions redeploy can't clear the custom domain.
+- **Nav/asset paths are relative; the site targets the apex domain.** `layout()` takes a `base` (`""` at root, `"../"` one level deep) for relative nav/asset links, but canonical/OG URLs use `config.siteUrl`, the 404 home link is the apex root `/`, and a `CNAME` is emitted (host derived from `config.siteUrl`) — so this is a `bidsvue.org` deploy, not a project subpath. Change the domain in one place: `config.siteUrl`.
 
 ## Decisions / accepted trade-offs (do not re-litigate)
 

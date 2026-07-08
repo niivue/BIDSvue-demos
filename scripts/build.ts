@@ -7,8 +7,9 @@
  *   dist/<slug>/*.png            that tutorial's screenshots (copied as-is)
  *   dist/assets/                 css + js
  *
- * All links/asset paths are relative, so the output works both locally and
- * under a GitHub Pages project subpath (…/BIDSvue-demos/) with no base config.
+ * Nav/asset paths are relative (via layout()'s `base`), but the site targets the
+ * apex custom domain: canonical/OG URLs use `config.siteUrl`, the 404 home link is
+ * the apex root "/", and a CNAME is emitted — so it is not a project-subpath deploy.
  */
 
 import { readFileSync } from "node:fs"
@@ -104,12 +105,13 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
   const dir = join(ROOT, t.slug)
   const md = await Bun.file(join(dir, "README.md")).text()
   // Resolve each figure's real size so the browser reserves its box (no CLS).
-  const { title, leadHtml, panelsHtml } = mdToPanels(md, (href) => pngSize(join(dir, href)))
+  const { title, leadHtml, panelsHtml, imageRefs } = mdToPanels(md, (href) => pngSize(join(dir, href)))
 
   // Warn (don't fail) on referenced local images that don't exist — catches
-  // typos and missing screenshots before they 404 on the live site. Scan the
-  // lead too (an image before the first `##`), not just the step panels.
-  for (const [, src] of (leadHtml + panelsHtml).matchAll(/<img src="([^"]+)"/g)) {
+  // typos and missing screenshots before they 404 on the live site. Checks the
+  // raw hrefs from the token pass (lead + panels), so real filenames — even ones
+  // with characters HTML-escaping would mangle — resolve correctly.
+  for (const src of imageRefs) {
     if (/^https?:/.test(src)) continue
     if (!(await Bun.file(join(dir, src)).exists())) {
       console.warn(`  ⚠  ${t.slug}: referenced image not found — ${src}`)
@@ -298,9 +300,10 @@ export async function build(): Promise<void> {
   await Bun.write(join(DIST, "404.html"), await notFoundPage())
   // GitHub Pages: skip Jekyll so `assets/` etc. are served verbatim.
   await Bun.write(join(DIST, ".nojekyll"), "")
-  // Custom apex domain. Emitting CNAME on every deploy keeps Pages from
-  // clearing the domain on an Actions redeploy.
-  await Bun.write(join(DIST, "CNAME"), "bidsvue.org\n")
+  // Custom apex domain, derived from the one source of truth (config.siteUrl).
+  // Emitting CNAME on every deploy keeps Pages from clearing the domain on an
+  // Actions redeploy.
+  await Bun.write(join(DIST, "CNAME"), `${new URL(config.siteUrl).host}\n`)
 
   // Crawlability signals: a robots.txt + sitemap help reputation/search crawlers
   // discover and categorize the site as legitimate content (see aboutPage).
