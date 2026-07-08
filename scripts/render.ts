@@ -260,6 +260,8 @@ export type LayoutOpts = {
   description: string
   /** Relative prefix to site root: "" at root, "../" one level deep. */
   base: string
+  /** Canonical path from the site root, no leading slash ("" home, "about/", "<slug>/"). */
+  path: string
   main: string
   /** Optional extra markup injected into <head> (e.g. JSON-LD). */
   headExtra?: string
@@ -274,10 +276,17 @@ export function layout(o: LayoutOpts): string {
 <title>${escapeHtml(o.title)}</title>
 <meta name="description" content="${escapeHtml(o.description)}" />
 <meta name="color-scheme" content="light dark" />
+<link rel="canonical" href="${config.siteUrl}/${o.path}" />
 <meta property="og:title" content="${escapeHtml(o.title)}" />
 <meta property="og:description" content="${escapeHtml(o.description)}" />
 <meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:url" content="${config.siteUrl}/${o.path}" />
+<meta property="og:image" content="${config.siteUrl}/assets/splash.png" />
+<meta property="og:image:width" content="2194" />
+<meta property="og:image:height" content="1438" />
+<meta property="og:image:alt" content="The ${escapeHtml(config.title)} app" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="${config.siteUrl}/assets/splash.png" />
 <link rel="icon" type="image/png" href="${o.base}assets/favicon.png" />
 <link rel="stylesheet" href="${o.base}assets/site.css" />
 <script>${HEAD_THEME_SCRIPT}</script>

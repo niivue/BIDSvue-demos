@@ -82,6 +82,7 @@ function landingPage(): string {
     title: `${config.title} demos — ${config.tagline}`,
     description: config.intro,
     base: "",
+    path: "",
     main,
   })
 }
@@ -135,6 +136,7 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
     title: `${title || t.title} — ${config.title} demos`,
     description: t.summary,
     base: "../",
+    path: `${t.slug}/`,
     main,
   })
 
@@ -234,6 +236,7 @@ function aboutPage(): string {
       `${config.title} is a free, open-source neuroscience tool from the NiiVue team, ` +
       "led by Chris Rorden and funded by the NIH BRAIN Initiative (RF1MH133701).",
     base: "../",
+    path: "about/",
     main,
     headExtra: `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
   })
@@ -299,13 +302,13 @@ export async function build(): Promise<void> {
   const urls = ["", "about/", ...config.tutorials.map((t) => `${t.slug}/`)]
   await Bun.write(
     join(DIST, "robots.txt"),
-    "User-agent: *\nAllow: /\nSitemap: https://bidsvue.org/sitemap.xml\n",
+    `User-agent: *\nAllow: /\nSitemap: ${config.siteUrl}/sitemap.xml\n`,
   )
   await Bun.write(
     join(DIST, "sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-      urls.map((u) => `  <url><loc>https://bidsvue.org/${u}</loc></url>`).join("\n") +
+      urls.map((u) => `  <url><loc>${config.siteUrl}/${u}</loc></url>`).join("\n") +
       `\n</urlset>\n`,
   )
 

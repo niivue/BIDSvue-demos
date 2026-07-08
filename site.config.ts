@@ -31,6 +31,8 @@ export type SiteConfig = {
   tagline: string
   /** Longer description for the home page's meta / social preview (not shown). */
   intro: string
+  /** Canonical site origin (no trailing slash) — for canonical + OG/Twitter URLs. */
+  siteUrl: string
   /** URL of the app / project the demos are for. */
   appUrl: string
   /** Where to download installers. */
@@ -46,6 +48,7 @@ const config: SiteConfig = {
   tagline: 'Create, curate, de-identify, and share BIDS datasets.',
   intro:
     'BIDSvue transforms raw neuroimaging data into curated archives that you can explore to fix errors, strip identifiable features, and publish to the cloud.',
+  siteUrl: 'https://bidsvue.org',
   appUrl: 'https://github.com/niivue/BIDSvue',
   releasesUrl: 'https://github.com/niivue/BIDSvue/releases',
   defaultAccent: 'orange',
