@@ -154,6 +154,91 @@ function backArrow(): string {
   return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>`
 }
 
+// ------- about page ---------------------------------------------------------
+
+// Canonical project links, gathered in one place. The About page exists partly
+// so a human — and a domain-reputation crawler (Cisco Talos/Umbrella, Zscaler,
+// …) — can see at a glance that this is legitimate, funded, open-source science
+// and categorize the new domain accordingly rather than blocking an unknown.
+const REPO = "https://github.com/niivue/BIDSvue"
+const LINKS = {
+  bids: "https://bids.neuroimaging.io/",
+  team: "https://niivue.com/",
+  lead: "https://scholar.google.com/citations?user=00jLGq8AAAAJ&hl=en",
+  award: "https://reporter.nih.gov/search/6jGLf73uBUWBbKBDMHhH5Q/project-details/10724895",
+  source: REPO,
+  issues: `${REPO}/issues`,
+  license: `${REPO}/blob/main/LICENSE`,
+}
+
+function aboutLink(label: string, sub: string, href: string): string {
+  return `
+      <a class="about-link" href="${escapeHtml(href)}">
+        <span class="about-link__label">${escapeHtml(label)}${ARROW}</span>
+        <span class="about-link__sub">${escapeHtml(sub)}</span>
+      </a>`
+}
+
+function aboutPage(): string {
+  const links = [
+    aboutLink("Funding", "NIH BRAIN Initiative · RF1MH133701", LINKS.award),
+    aboutLink("Lead", "Chris Rorden · Google Scholar", LINKS.lead),
+    aboutLink("Team", "The NiiVue team", LINKS.team),
+    aboutLink("Source", "Code on GitHub", LINKS.source),
+    aboutLink("Issues", "Report a bug or ask a question", LINKS.issues),
+    aboutLink("License", "BSD 2-Clause · open source", LINKS.license),
+  ].join("")
+
+  const main = `
+  <section class="section about">
+    <div class="container">
+      <a class="back" href="../index.html">${backArrow()} Back to demos</a>
+      <div class="section__head">
+        <p class="section__eyebrow">About</p>
+        <h2>A free, open-source neuroscience project</h2>
+      </div>
+      <div class="about__prose">
+        <p class="about__lead">${escapeHtml(config.title)} is a free, open-source neuroscience tool for creating, curating, de-identifying, and sharing <a href="${escapeHtml(LINKS.bids)}">BIDS</a> datasets. It is developed and maintained by the <a href="${escapeHtml(LINKS.team)}">NiiVue team</a>. Development is led by <a href="${escapeHtml(LINKS.lead)}">Chris Rorden</a> and supported by the NIH BRAIN Initiative award <a href="${escapeHtml(LINKS.award)}">RF1MH133701</a>.</p>
+        <p class="about__note">This site is static documentation hosted on GitHub Pages. It sets no cookies, runs no analytics or trackers, and collects no personal data.</p>
+      </div>
+      <div class="about-links">${links}</div>
+    </div>
+  </section>`
+
+  // schema.org metadata — machine-readable provenance (author, funder, license)
+  // for search engines and reputation crawlers.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: config.title,
+    applicationCategory: "Neuroscience / medical-imaging software",
+    operatingSystem: "Windows, macOS, Linux",
+    url: "https://bidsvue.org/",
+    isAccessibleForFree: true,
+    license: LINKS.license,
+    codeRepository: REPO,
+    author: { "@type": "Person", name: "Chris Rorden", sameAs: LINKS.lead },
+    publisher: { "@type": "Organization", name: "NiiVue", url: LINKS.team },
+    funder: {
+      "@type": "Organization",
+      name: "NIH BRAIN Initiative",
+      identifier: "RF1MH133701",
+      url: LINKS.award,
+    },
+    sameAs: [REPO, LINKS.team],
+  }
+
+  return layout({
+    title: `About — ${config.title} demos`,
+    description:
+      `${config.title} is a free, open-source neuroscience tool from the NiiVue team, ` +
+      "led by Chris Rorden and funded by the NIH BRAIN Initiative (RF1MH133701).",
+    base: "../",
+    main,
+    headExtra: `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
+  })
+}
+
 // ------- 404 ----------------------------------------------------------------
 
 // GitHub Pages serves 404.html for any missing path, at any depth, so it can't
@@ -200,12 +285,29 @@ export async function build(): Promise<void> {
   await mkdir(DIST, { recursive: true })
 
   await Bun.write(join(DIST, "index.html"), landingPage())
+  await mkdir(join(DIST, "about"), { recursive: true })
+  await Bun.write(join(DIST, "about", "index.html"), aboutPage())
   await Bun.write(join(DIST, "404.html"), await notFoundPage())
   // GitHub Pages: skip Jekyll so `assets/` etc. are served verbatim.
   await Bun.write(join(DIST, ".nojekyll"), "")
   // Custom apex domain. Emitting CNAME on every deploy keeps Pages from
   // clearing the domain on an Actions redeploy.
   await Bun.write(join(DIST, "CNAME"), "bidsvue.org\n")
+
+  // Crawlability signals: a robots.txt + sitemap help reputation/search crawlers
+  // discover and categorize the site as legitimate content (see aboutPage).
+  const urls = ["", "about/", ...config.tutorials.map((t) => `${t.slug}/`)]
+  await Bun.write(
+    join(DIST, "robots.txt"),
+    "User-agent: *\nAllow: /\nSitemap: https://bidsvue.org/sitemap.xml\n",
+  )
+  await Bun.write(
+    join(DIST, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      urls.map((u) => `  <url><loc>https://bidsvue.org/${u}</loc></url>`).join("\n") +
+      `\n</urlset>\n`,
+  )
 
   for (const t of config.tutorials) await buildTutorial(t)
 
@@ -216,6 +318,6 @@ if (import.meta.main) {
   const t0 = performance.now()
   await build()
   const ms = Math.round(performance.now() - t0)
-  const pages = config.tutorials.length + 2 // home + 404 + one per tutorial
+  const pages = config.tutorials.length + 3 // home + about + 404 + one per tutorial
   console.log(`✓ Built ${pages} pages → dist/  (${ms}ms)`)
 }

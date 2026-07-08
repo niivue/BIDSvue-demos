@@ -6,7 +6,7 @@ A tiny static-site generator (Bun + [`marked`](https://github.com/markedjs/marke
 
 ## Architecture / file map
 
-- **`scripts/build.ts`** — Markdown + `site.config.ts` → `dist/`. Emits `dist/index.html` (hero + tutorial cards + tools), `dist/<slug>/index.html` per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at any Pages depth), copies each tutorial's screenshots and `assets/`, writes `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries intrinsic `width`/`height` → no layout shift, and **warns at build time on a referenced image that doesn't exist** (typo/missing screenshot before it 404s live).
+- **`scripts/build.ts`** — Markdown + `site.config.ts` → `dist/`. Emits `dist/index.html` (hero + tutorial cards + tools), `dist/about/index.html` (project/legitimacy page + JSON-LD provenance), `dist/<slug>/index.html` per tutorial, a self-contained `dist/404.html` (inlined CSS so it renders at any Pages depth), plus `robots.txt` + `sitemap.xml` (crawlability), copies each tutorial's screenshots and `assets/`, writes `.nojekyll`. Reads each figure's PNG size (`pngSize`) so `<img>` carries intrinsic `width`/`height` → no layout shift, and **warns at build time on a referenced image that doesn't exist** (typo/missing screenshot before it 404s live).
 - **`scripts/render.ts`** — the Markdown → step-panels transform plus the HTML shell (topbar / footer / `layout()`). Takes an injected `DimResolver` (`(href) => {w,h} | null`) so image dimensions come from the caller, not a filesystem read here. Also holds `escapeHtml`, `mdToPanels`, the accent list, the no-FOUC head script, and `MAXIMIZE` (the peek-drawer icon).
 - **`scripts/dev.ts`** — dev server on `localhost:5173`, SSE live-reload (`/__livereload`), and a source file watcher that rebuilds + reloads.
 - **`scripts/preview.ts`** — static server on `localhost:4173`; serves a prebuilt `dist/` exactly as Pages will (no watch/reload).
@@ -47,7 +47,7 @@ Do **not** hard-wrap lines. Use a blank line (EOLN) between paragraphs, list ite
 
 Two **floating ribbons**, not full-width bars:
 
-- **Top-left nav ribbon**: `.topbar` is a bare positioning wrapper; `.topbar__panel` is the visible toolbar (identical on every page — lower-right corner beveled), holding brand "BIDSvue demos" then `Tutorials | Source | Download`. On the **home page** an accent **"Peek at BIDSvue" drawer** (`.topbar__peek`) sits *behind* the panel (lower z-index), tucking under its right edge and sliding out to the right to open `assets/splash.png` in the lightbox. Hidden under 620px.
+- **Top-left nav ribbon**: `.topbar` is a bare positioning wrapper; `.topbar__panel` is the visible toolbar (identical on every page — lower-right corner beveled), holding brand "BIDSvue demos" then `Tutorials | About | Download` (About → the `/about/` legitimacy page; the source repo now lives among its link tiles). On the **home page** an accent **"Peek at BIDSvue" drawer** (`.topbar__peek`) sits *behind* the panel (lower z-index), tucking under its right edge and sliding out to the right to open `assets/splash.png` in the lightbox. Hidden under 620px.
 - **Bottom-right controls ribbon** (`.site-footer` / `.controls`): the six accent swatches + the light/dark toggle. Only the upper-left corner is beveled.
 - **Lightbox**: click-to-open / click-to-close (or Escape) over a blurred backdrop, accent border, one reused overlay per page. It opens any `[data-lightbox-src]` element (the peek drawer, screenshots), not just `.shot` figures.
 

@@ -580,6 +580,81 @@ a:hover {
   font-size: 0.9rem;
 }
 
+/* ------- About page ------------------------------------------------------- */
+.about {
+  /* top space clears the fixed nav ribbon; roomy bottom */
+  padding-block: clamp(3rem, 4.5vw, 3.75rem) clamp(3rem, 6vw, 5rem);
+}
+.about .container {
+  max-width: var(--maxw-text); /* text-heavy → readable measure, not the wide landing */
+}
+.about__prose {
+  max-width: 64ch;
+  margin-bottom: 2.2rem;
+}
+.about__prose p {
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+.about__lead {
+  font-size: 1.15rem;
+}
+.about__note {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+.about__prose a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.about__prose a:hover {
+  text-decoration: underline;
+}
+.about-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+@media (min-width: 520px) {
+  .about-links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 800px) {
+  .about-links {
+    grid-template-columns: repeat(3, 1fr); /* 6 links → 2 tidy rows */
+  }
+}
+.about-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.about-link:hover {
+  border-color: var(--accent);
+  background: var(--bg-base);
+  transform: translateY(-2px);
+}
+.about-link__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4ch;
+  color: var(--accent);
+  font-weight: 700;
+}
+.about-link__sub {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+}
+
 /* ------- Tutorial page: step panels -------------------------------------- */
 /* Tutorial pages are text-heavy, so cap them tighter than the wide landing to
    keep prose at a readable measure on large/4K screens. */
@@ -591,7 +666,8 @@ a:hover {
   /* just enough top space so the top-left "back" link clears the nav ribbon */
   padding-block: clamp(3rem, 4.5vw, 3.75rem) clamp(1rem, 2.5vw, 1.75rem);
 }
-.tut-hero .back {
+.tut-hero .back,
+.about .back {
   display: inline-flex;
   align-items: center;
   gap: 0.4ch;
@@ -601,7 +677,8 @@ a:hover {
   text-decoration: none;
   margin-bottom: 1.4rem;
 }
-.tut-hero .back:hover {
+.tut-hero .back:hover,
+.about .back:hover {
   color: var(--accent);
 }
 .tut-hero h1 {

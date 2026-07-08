@@ -231,7 +231,7 @@ function topbar(base: string): string {
       ${sep}
       <a class="topnav-link" href="${base}index.html#tutorials">Tutorials</a>
       ${sep}
-      <a class="topnav-link" href="${escapeHtml(config.appUrl)}">Source</a>
+      <a class="topnav-link" href="${base}about/">About</a>
       ${sep}
       <a class="topnav-link" href="${escapeHtml(config.releasesUrl)}">Download</a>
     </header>${peek}
@@ -261,6 +261,8 @@ export type LayoutOpts = {
   /** Relative prefix to site root: "" at root, "../" one level deep. */
   base: string
   main: string
+  /** Optional extra markup injected into <head> (e.g. JSON-LD). */
+  headExtra?: string
 }
 
 export function layout(o: LayoutOpts): string {
@@ -279,7 +281,7 @@ export function layout(o: LayoutOpts): string {
 <link rel="icon" type="image/png" href="${o.base}assets/favicon.png" />
 <link rel="stylesheet" href="${o.base}assets/site.css" />
 <script>${HEAD_THEME_SCRIPT}</script>
-</head>
+${o.headExtra ?? ""}</head>
 <body>
 ${topbar(o.base)}
 <main>
