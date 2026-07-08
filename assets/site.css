@@ -22,10 +22,14 @@ html {
   scroll-padding-top: 5rem;
   /* Scale the whole type/space system a step or two up on large canvases so the
      page fills wide/4K screens instead of reading as tiny text in empty bands.
-     Nothing changes at/under ~1600px (stays 16px), grows to 19px past ~2800px.
+     Nothing changes at/under ~1600px (stays 16px); grows toward 21px on 4K.
      Almost everything is in rem, so this lifts headings, body, cards and gaps
-     together — the way Linear et al. scale up when there's room. */
-  font-size: clamp(16px, 12px + 0.25vw, 19px);
+     together — the way Linear et al. scale up when there's room.
+     round(down, …, 1px) snaps the computed size to a whole pixel so the entire
+     rem cascade resolves to integers (no sub-pixel fuzz); the plain clamp above
+     is the fallback for browsers without CSS round(). */
+  font-size: clamp(16px, 12px + 0.25vw, 21px);
+  font-size: round(down, clamp(16px, 12px + 0.25vw, 21px), 1px);
 }
 img,
 picture,
@@ -35,6 +39,15 @@ svg {
 }
 a {
   color: inherit;
+}
+/* Keyboard focus: a clear ring in the current accent (outline follows each
+   element's own border-radius in modern browsers). Mouse clicks don't trigger
+   :focus-visible, so it stays out of the way for pointer users. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ------- Theme tokens (light; Orange accent by default) ------------------- */
@@ -399,7 +412,8 @@ a:hover {
 
 /* ------- Hero ------------------------------------------------------------- */
 .hero {
-  padding-block: clamp(3rem, 4vw, 3.5rem) clamp(1.25rem, 3vw, 2rem);
+  /* max held back so the type-scaling fills width without ballooning height */
+  padding-block: 3rem clamp(1.25rem, 2.5vw, 1.5rem);
   text-align: center;
 }
 .hero h1 {
@@ -419,11 +433,12 @@ a:hover {
 }
 /* ------- Section scaffolding --------------------------------------------- */
 .section {
-  padding-block: clamp(1.75rem, 4vw, 3rem);
+  /* max held back (was 3rem) so vertical whitespace doesn't inflate on 4K */
+  padding-block: clamp(1.75rem, 3.5vw, 2.25rem);
 }
 .section__head {
   max-width: 40rem;
-  margin-bottom: 1.6rem;
+  margin-bottom: 1.25rem;
 }
 .section__eyebrow {
   font-size: 0.78rem;
