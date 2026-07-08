@@ -107,8 +107,9 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
   const { title, leadHtml, panelsHtml } = mdToPanels(md, (href) => pngSize(join(dir, href)))
 
   // Warn (don't fail) on referenced local images that don't exist — catches
-  // typos and missing screenshots before they 404 on the live site.
-  for (const [, src] of panelsHtml.matchAll(/<img src="([^"]+)"/g)) {
+  // typos and missing screenshots before they 404 on the live site. Scan the
+  // lead too (an image before the first `##`), not just the step panels.
+  for (const [, src] of (leadHtml + panelsHtml).matchAll(/<img src="([^"]+)"/g)) {
     if (/^https?:/.test(src)) continue
     if (!(await Bun.file(join(dir, src)).exists())) {
       console.warn(`  ⚠  ${t.slug}: referenced image not found — ${src}`)
@@ -162,7 +163,7 @@ function backArrow(): string {
 // so a human — and a domain-reputation crawler (Cisco Talos/Umbrella, Zscaler,
 // …) — can see at a glance that this is legitimate, funded, open-source science
 // and categorize the new domain accordingly rather than blocking an unknown.
-const REPO = "https://github.com/niivue/BIDSvue"
+const REPO = config.appUrl // single source of truth for the project repo URL
 const LINKS = {
   bids: "https://bids.neuroimaging.io/",
   team: "https://niivue.com/",
@@ -181,7 +182,7 @@ function aboutLink(label: string, sub: string, href: string): string {
       </a>`
 }
 
-function aboutPage(): string {
+export function aboutPage(): string {
   const links = [
     aboutLink("Funding", "NIH BRAIN Initiative · RF1MH133701", LINKS.award),
     aboutLink("Lead", "Chris Rorden · Google Scholar", LINKS.lead),
@@ -215,7 +216,7 @@ function aboutPage(): string {
     name: config.title,
     applicationCategory: "Neuroscience / medical-imaging software",
     operatingSystem: "Windows, macOS, Linux",
-    url: "https://bidsvue.org/",
+    url: `${config.siteUrl}/`,
     isAccessibleForFree: true,
     license: LINKS.license,
     codeRepository: REPO,
@@ -238,7 +239,10 @@ function aboutPage(): string {
     base: "../",
     path: "about/",
     main,
-    headExtra: `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
+    // Escape `<` so a value can never break out of the <script> context (JSON
+    // itself doesn't neutralize a literal `</script>`). All values are trusted
+    // today; this keeps it safe if a Markdown-derived field is ever added.
+    headExtra: `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>`,
   })
 }
 
@@ -247,7 +251,8 @@ function aboutPage(): string {
 // GitHub Pages serves 404.html for any missing path, at any depth, so it can't
 // rely on relative asset paths (they'd resolve against the wrong URL). It's
 // therefore self-contained: CSS inlined, favicon as a data URI, and the "home"
-// link resolved at runtime to the site root (origin + first path segment).
+// link is the apex root ("/") — correct for the custom domain this site targets
+// (bidsvue.org), not a project-subpath deployment.
 async function notFoundPage(): Promise<string> {
   const css = await Bun.file(join(ROOT, "assets", "site.css")).text()
   const favicon = Buffer.from(

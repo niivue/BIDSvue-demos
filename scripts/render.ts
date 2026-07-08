@@ -282,6 +282,7 @@ export function layout(o: LayoutOpts): string {
 <meta property="og:type" content="website" />
 <meta property="og:url" content="${config.siteUrl}/${o.path}" />
 <meta property="og:image" content="${config.siteUrl}/assets/splash.png" />
+<!-- dimensions track assets/splash.png (2194×1438); update if the splash is re-exported -->
 <meta property="og:image:width" content="2194" />
 <meta property="og:image:height" content="1438" />
 <meta property="og:image:alt" content="The ${escapeHtml(config.title)} app" />

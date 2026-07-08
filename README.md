@@ -74,7 +74,9 @@ The look and feel is drawn from BIDSvue itself: the same system font, the same s
 
 The chrome is two small floating ribbons rather than full-width bars:
 
-- A **nav ribbon** in the top-left corner — "BIDSvue demos", plus links to the tutorials, the source repo, and downloads. On the home page it carries an accent **"Peek at BIDSvue" drawer** that slides out of the ribbon's right edge and opens the app splash in the lightbox.
+- A **nav ribbon** in the top-left corner — "BIDSvue demos", plus links to the tutorials, an **About** page, and downloads. On the home page it carries an accent **"Peek at BIDSvue" drawer** that slides out of the ribbon's right edge and opens the app splash in the lightbox.
 - A **controls ribbon** in the bottom-right corner — the accent swatches and the light/dark toggle. Your theme and accent choices are remembered.
 
 The accent color also tints the translucent glow around each numbered step's screenshot, and clicking any screenshot opens it enlarged in a lightbox over a blurred backdrop (click anywhere or press <kbd>Esc</kbd> to close).
+
+An **About page** (linked from the nav) records the project's funding, team, source, and license — the source repo now lives there. The build also emits social-preview and search metadata (Open Graph / Twitter card, per-page canonical URLs, JSON-LD provenance) plus a `robots.txt` and `sitemap.xml`. On large 4K canvases the root type scales up so the layout fills the screen instead of leaving tiny text in empty bands.
