@@ -5,7 +5,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { aboutPage, build, findMissingCssAssets, findUnpromotedDistAssets } from "./build.ts"
+import { HERO_VARIANTS, aboutPage, build, findMissingCssAssets, findUnpromotedDistAssets } from "./build.ts"
 import { layout } from "./render.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
@@ -72,8 +72,11 @@ test("build emits the full generated-site contract (CNAME/robots/sitemap/404)", 
   expect(assetManifest.files["site.css"]).toMatch(/^[a-f0-9]{64}$/)
 
   const home = await read("index.html")
+  expect(home).toContain("data-hero-variant")
+  expect(home).toContain('["mesh","voxel","coronal","sagittal"]')
+  expect(home).toContain('data-hero-variants="mesh voxel coronal sagittal"')
   expect(home).toContain('data-radar-toggle')
-  expect(home).toContain('data-radar-toggle aria-hidden="true"')
+  expect(home).toMatch(/data-radar-toggle[^>]*aria-hidden="true"/)
   expect(home).not.toContain('data-radar-toggle role="button"')
   for (const [index, tutorial] of config.tutorials.entries()) {
     expect(home).toContain(
@@ -128,5 +131,38 @@ test("CSS asset guard reports missing local url references", async () => {
     expect(await findMissingCssAssets(join(root, "site.css"), root)).toEqual(["missing.png"])
   } finally {
     await rm(root, { recursive: true, force: true })
+  }
+})
+
+test("hero variants have registered, dimension-matched PNG pairs with alpha masks", async () => {
+  const css = await Bun.file(join(ROOT, "assets", "site.css")).text()
+  const pngInfo = async (path: string) => {
+    const bytes = Buffer.from(await Bun.file(path).arrayBuffer())
+    expect(bytes.length).toBeGreaterThanOrEqual(26)
+    expect(bytes.readUInt32BE(0)).toBe(0x89504e47)
+    return {
+      width: bytes.readUInt32BE(16),
+      height: bytes.readUInt32BE(20),
+      colorType: bytes[25],
+    }
+  }
+
+  for (const { id } of HERO_VARIANTS) {
+    const baseName = `${id}-base.png`
+    const activeName = `${id}-active.png`
+    const basePath = join(ROOT, "assets", baseName)
+    const activePath = join(ROOT, "assets", activeName)
+    expect(css).toContain(`url("${baseName}")`)
+    expect(css).toContain(`url("${activeName}")`)
+    expect(await Bun.file(basePath).exists()).toBe(true)
+    expect(await Bun.file(activePath).exists()).toBe(true)
+
+    const base = await pngInfo(basePath)
+    const active = await pngInfo(activePath)
+    expect({ width: active.width, height: active.height }).toEqual({
+      width: base.width,
+      height: base.height,
+    })
+    expect([4, 6]).toContain(active.colorType) // grayscale+alpha or RGBA
   }
 })

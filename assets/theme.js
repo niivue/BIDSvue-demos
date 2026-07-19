@@ -11,7 +11,7 @@ if (
 ) {
   navigator.serviceWorker
     .getRegistrations()
-    .then((regs) => regs.forEach((r) => r.unregister()))
+    .then((regs) => Promise.allSettled(regs.map((r) => r.unregister())))
     .catch(() => {})
 }
 
@@ -91,28 +91,159 @@ if (
 ;(() => {
   const radar = document.querySelector("[data-radar-toggle]")
   if (!radar) return
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
 
   const sync = (paused) => {
     radar.classList.toggle("radar-paused", paused)
     radar.setAttribute("aria-pressed", String(paused))
+    radar.setAttribute("title", `${paused ? "Click to resume" : "Click to pause"} · Double-click to change image`)
   }
   const toggle = () => sync(!radar.classList.contains("radar-paused"))
+  const variants = (radar.getAttribute("data-hero-variants") || "")
+    .split(/\s+/)
+    .filter(Boolean)
+  const PRELOAD_TIMEOUT = 5000
+  const POINTER_CLICK_DELAY = 250
+  let switchingVariant = false
+  let clickTimer = null
+  let controls = null
+  let visibilityObserver = null
 
-  radar.removeAttribute("aria-hidden")
-  radar.setAttribute("role", "button")
-  radar.setAttribute("tabindex", "0")
-  radar.setAttribute("aria-label", "Pause radar animation")
-  sync(false)
+  const cancelPendingClick = () => {
+    if (clickTimer === null) return
+    clearTimeout(clickTimer)
+    clickTimer = null
+  }
 
-  radar.addEventListener("click", toggle)
-  radar.addEventListener("keydown", (event) => {
-    if (event.repeat) return
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault()
-      toggle()
+  const cycleVariant = async () => {
+    if (switchingVariant || variants.length < 2) return
+    switchingVariant = true
+    const root = document.documentElement
+    const current = root.getAttribute("data-hero-variant")
+    const next = variants[(variants.indexOf(current) + 1) % variants.length]
+    const preload = (name) =>
+      new Promise((resolve) => {
+        const image = new Image()
+        let settled = false
+        let timeout
+        const finish = (loaded) => {
+          if (settled) return
+          settled = true
+          clearTimeout(timeout)
+          image.onload = image.onerror = null
+          if (!loaded) image.removeAttribute("src")
+          resolve(loaded)
+        }
+        timeout = setTimeout(() => finish(false), PRELOAD_TIMEOUT)
+        image.onload = () => finish(true)
+        image.onerror = () => finish(false)
+        try {
+          image.src = new URL(`assets/${next}-${name}.png`, document.baseURI).href
+        } catch {
+          finish(false)
+        }
+      })
+    try {
+      const loaded = await Promise.all([preload("base"), preload("active")])
+      if (loaded.every(Boolean)) root.setAttribute("data-hero-variant", next)
+    } finally {
+      switchingVariant = false
     }
-  })
+  }
+
+  const enableControls = () => {
+    if (controls) return
+    controls = new AbortController()
+    const { signal } = controls
+
+    radar.removeAttribute("aria-hidden")
+    radar.setAttribute("role", "button")
+    radar.setAttribute("tabindex", "0")
+    radar.setAttribute("aria-label", "Pause radar animation")
+    radar.setAttribute("aria-description", "Double-click or press Shift+Enter to change the image")
+    sync(radar.classList.contains("radar-paused"))
+
+    radar.addEventListener(
+      "click",
+      (event) => {
+        // Pointer clicks wait briefly so a second click can become a variant
+        // change without disturbing the animation's running/paused phase.
+        if (event.detail === 0) {
+          toggle()
+          return
+        }
+        cancelPendingClick()
+        if (event.detail > 1) return
+        clickTimer = setTimeout(() => {
+          clickTimer = null
+          toggle()
+        }, POINTER_CLICK_DELAY)
+      },
+      { signal },
+    )
+    radar.addEventListener(
+      "dblclick",
+      (event) => {
+        event.preventDefault()
+        cancelPendingClick()
+        cycleVariant()
+      },
+      { signal },
+    )
+    radar.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.repeat) return
+        if (event.key === "Enter" && event.shiftKey) {
+          event.preventDefault()
+          cancelPendingClick()
+          cycleVariant()
+          return
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          cancelPendingClick()
+          toggle()
+        }
+      },
+      { signal },
+    )
+
+    if ("IntersectionObserver" in window) {
+      visibilityObserver = new IntersectionObserver(([entry]) => {
+        radar.classList.toggle("radar-offscreen", !entry.isIntersecting)
+      })
+      visibilityObserver.observe(radar)
+    }
+  }
+
+  const disableControls = () => {
+    cancelPendingClick()
+    controls?.abort()
+    controls = null
+    visibilityObserver?.disconnect()
+    visibilityObserver = null
+    radar.classList.remove("radar-offscreen")
+    const interactiveAttributes = [
+      "role",
+      "tabindex",
+      "aria-pressed",
+      "aria-label",
+      "aria-description",
+      "title",
+    ]
+    for (const attribute of interactiveAttributes) {
+      radar.removeAttribute(attribute)
+    }
+    radar.setAttribute("aria-hidden", "true")
+  }
+
+  const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)")
+  const syncMotionPreference = () => {
+    if (motionPreference.matches) disableControls()
+    else enableControls()
+  }
+  motionPreference.addEventListener("change", syncMotionPreference)
+  syncMotionPreference()
 })()
 
 // Screenshot lightbox: click a `.shot` to open the image large over a blurred

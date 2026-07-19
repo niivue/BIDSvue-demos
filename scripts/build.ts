@@ -141,6 +141,15 @@ async function assertCssAssetsExist(): Promise<void> {
 
 // ------- landing page -------------------------------------------------------
 
+export const HERO_VARIANTS = [
+  { id: "mesh", label: "NiiVue / cortical mesh", detail: "MNI152 · LH" },
+  { id: "voxel", label: "NiiVue / voxel volumes", detail: "MNI152 · axial" },
+  { id: "coronal", label: "NiiVue / voxel volumes", detail: "MNI152 · coronal" },
+  { id: "sagittal", label: "NiiVue / voxel volumes", detail: "MNI152 · sagittal" },
+] as const
+const HERO_VARIANT_IDS = HERO_VARIANTS.map(({ id }) => id)
+const HERO_VARIANT_SCRIPT = `(function(){var variants=${JSON.stringify(HERO_VARIANT_IDS)};document.documentElement.setAttribute('data-hero-variant',variants[Math.floor(Math.random()*variants.length)])})();`
+
 function tutorialCard(t: (typeof config.tutorials)[number], index: number): string {
   const chips = t.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")
   return `
@@ -175,6 +184,13 @@ function landingPage(): string {
         `<a href="${escapeHtml(tutorial.slug)}/index.html"><b>${index + 1}</b> ${escapeHtml(tutorial.shortcutLabel)}</a>`,
     )
     .join("\n          ")
+  const coordinates = HERO_VARIANTS.map(
+    ({ id, label, detail }) => `
+        <div class="hero__coordinates hero__coordinates--${escapeHtml(id)}">
+          <span>${escapeHtml(label)}</span>
+          <span>${escapeHtml(detail)}</span>
+        </div>`,
+  ).join("")
   const main = `
   <section class="hero">
     <div class="container hero__grid">
@@ -190,14 +206,11 @@ function landingPage(): string {
           ${shortcuts}
         </nav>
       </div>
-      <div class="hero__visual" data-radar-toggle aria-hidden="true">
+      <div class="hero__visual" data-radar-toggle data-hero-variants="${HERO_VARIANT_IDS.join(" ")}" aria-hidden="true">
         <div class="hero__mesh-base"></div>
         <div class="hero__activation"></div>
         <div class="hero__scanline"></div>
-        <div class="hero__coordinates">
-          <span>NiiVue / cortical mesh</span>
-          <span>MNI152 · LH</span>
-        </div>
+        ${coordinates}
       </div>
     </div>
   </section>
@@ -234,6 +247,7 @@ function landingPage(): string {
     base: "",
     path: "",
     main,
+    headExtra: `<script>${HERO_VARIANT_SCRIPT}</script>`,
   })
 }
 

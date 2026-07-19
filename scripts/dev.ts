@@ -171,22 +171,44 @@ function sourceSignature(): string {
 
 let lastSignature = sourceSignature()
 let timer: ReturnType<typeof setTimeout> | null = null
+let building = false
+let buildQueued = false
+
+async function runRebuild(): Promise<void> {
+  if (building) {
+    buildQueued = true
+    return
+  }
+
+  building = true
+  try {
+    do {
+      buildQueued = false
+      const sig = sourceSignature()
+      if (sig === lastSignature) continue // spurious event (e.g. read-only access)
+      lastSignature = sig
+      try {
+        await build()
+        console.log("  ↻  rebuilt")
+        notifyReload()
+      } catch (err) {
+        console.error("  ✗  build failed:", err instanceof Error ? err.message : err)
+      }
+
+      // A source edit may arrive while build() is replacing dist/. Queue one
+      // follow-up build instead of allowing the two destructive writes to race.
+      if (sourceSignature() !== lastSignature) buildQueued = true
+    } while (buildQueued)
+  } finally {
+    building = false
+  }
+}
+
 const rebuild = () => {
   if (timer) clearTimeout(timer)
-  timer = setTimeout(async () => {
-    const sig = sourceSignature()
-    if (sig === lastSignature) return // spurious event (e.g. read-only access)
-    lastSignature = sig
-    try {
-      await build()
-      // The build re-read (and thus bumped atime on) the sources; refresh the
-      // baseline so those reads don't count as a change next tick.
-      lastSignature = sourceSignature()
-      console.log("  ↻  rebuilt")
-      notifyReload()
-    } catch (err) {
-      console.error("  ✗  build failed:", err instanceof Error ? err.message : err)
-    }
+  timer = setTimeout(() => {
+    timer = null
+    void runRebuild()
   }, 80)
 }
 

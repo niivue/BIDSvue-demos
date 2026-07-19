@@ -855,7 +855,10 @@ a:hover {
 
 .hero__visual {
   --hero-scan: 18%;
-  --hero-radar-speed: 17s;
+  --hero-radar-speed: 14.3s;
+  --hero-image-size: 118% auto;
+  --hero-base-image: url("mesh-base.png");
+  --hero-active-image: url("mesh-active.png");
   position: relative;
   min-height: clamp(22rem, 36vw, 33rem);
   margin-right: min(-10vw, -3rem);
@@ -863,12 +866,37 @@ a:hover {
   animation: hero-radar-position var(--hero-radar-speed) linear infinite;
 }
 
+:root[data-hero-variant="voxel"] .hero__visual,
+:root[data-hero-variant="coronal"] .hero__visual,
+:root[data-hero-variant="sagittal"] .hero__visual {
+  --hero-image-size: 96% auto;
+  animation-name: hero-radar-position-wide;
+}
+
+:root[data-hero-variant="voxel"] .hero__visual {
+  --hero-base-image: url("voxel-base.png");
+  --hero-active-image: url("voxel-active.png");
+}
+
+:root[data-hero-variant="coronal"] .hero__visual {
+  --hero-base-image: url("coronal-base.png");
+  --hero-active-image: url("coronal-active.png");
+}
+
+:root[data-hero-variant="sagittal"] .hero__visual {
+  --hero-base-image: url("sagittal-base.png");
+  --hero-active-image: url("sagittal-active.png");
+}
+
 .hero__visual[role="button"] {
   cursor: pointer;
+  user-select: none;
 }
 
 .hero__visual.radar-paused,
-.hero__visual.radar-paused .hero__scanline {
+.hero__visual.radar-paused .hero__scanline,
+.hero__visual.radar-offscreen,
+.hero__visual.radar-offscreen .hero__scanline {
   animation-play-state: paused;
 }
 
@@ -886,13 +914,13 @@ a:hover {
   inset: 0;
   background-position: center;
   background-repeat: no-repeat;
-  /* Keep this scale paired with the activation mask below. */
-  background-size: 118% auto;
+  /* One shared size keeps each base/activation pair registered. */
+  background-size: var(--hero-image-size);
 }
 
 .hero__mesh-base {
   z-index: 1;
-  background-image: url("mesh-base.png");
+  background-image: var(--hero-base-image);
   filter: contrast(1.02) brightness(0.78);
   opacity: 0.88;
 }
@@ -911,8 +939,8 @@ a:hover {
     transparent calc(var(--hero-scan) + 0.12%),
     transparent 100%
   );
-  -webkit-mask: url("mesh-active.png") center / 118% auto no-repeat;
-  mask: url("mesh-active.png") center / 118% auto no-repeat;
+  -webkit-mask: var(--hero-active-image) center / var(--hero-image-size) no-repeat;
+  mask: var(--hero-active-image) center / var(--hero-image-size) no-repeat;
   filter: drop-shadow(0 0 8px var(--accent-glow));
   opacity: 0.96;
 }
@@ -945,6 +973,24 @@ a:hover {
   text-transform: uppercase;
 }
 
+.hero__coordinates--voxel,
+.hero__coordinates--coronal,
+.hero__coordinates--sagittal {
+  display: none;
+}
+
+:root[data-hero-variant="voxel"] .hero__coordinates--mesh,
+:root[data-hero-variant="coronal"] .hero__coordinates--mesh,
+:root[data-hero-variant="sagittal"] .hero__coordinates--mesh {
+  display: none;
+}
+
+:root[data-hero-variant="voxel"] .hero__coordinates--voxel,
+:root[data-hero-variant="coronal"] .hero__coordinates--coronal,
+:root[data-hero-variant="sagittal"] .hero__coordinates--sagittal {
+  display: flex;
+}
+
 @property --hero-scan {
   syntax: "<percentage>";
   inherits: true;
@@ -952,15 +998,18 @@ a:hover {
 }
 
 @keyframes hero-radar-position {
-  0%, 8% { --hero-scan: 18%; }
-  92%, 100% { --hero-scan: 82%; }
+  from { --hero-scan: 18%; }
+  to { --hero-scan: 82%; }
+}
+
+@keyframes hero-radar-position-wide {
+  from { --hero-scan: 0%; }
+  to { --hero-scan: 100%; }
 }
 
 @keyframes hero-radar-line {
-  0%, 8% { opacity: 0; }
-  14% { opacity: 0.92; }
-  86% { opacity: 0.92; }
-  92%, 100% { opacity: 0; }
+  0%, 99.7% { opacity: 0.92; }
+  99.8%, 100% { opacity: 0; }
 }
 
 /* Editorial section structure. */
@@ -1569,6 +1618,13 @@ a:hover {
   .hero__visual {
     min-height: min(32rem, 76vw);
     margin: -3rem -10vw -2rem 18vw;
+  }
+
+  :root[data-hero-variant="voxel"] .hero__visual,
+  :root[data-hero-variant="coronal"] .hero__visual,
+  :root[data-hero-variant="sagittal"] .hero__visual {
+    min-height: clamp(16rem, 43vw, 22rem);
+    margin: -0.5rem -1rem -2rem;
   }
 
   .hero__coordinates {
