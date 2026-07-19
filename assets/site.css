@@ -229,9 +229,11 @@ a:hover {
 
 /* theme + accent controls (live in the bottom-right tab) */
 .controls {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  padding-right: calc(34px + 0.6rem);
 }
 .icon-btn {
   display: inline-grid;
@@ -482,7 +484,7 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.48rem 0.65rem;
+  padding: 5px 0.55rem 5px 0.65rem;
   color: var(--fg-base);
   background: var(--chrome-bg);
   -webkit-backdrop-filter: blur(10px) saturate(1.3);
@@ -495,7 +497,18 @@ a:hover {
 }
 
 .site-footer .icon-btn {
+  /* Remove the 34px roundel from the rail's height while keeping its hit area. */
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+}
+
+.site-footer .icon-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Keep the floating nav tab compact on small screens. */
