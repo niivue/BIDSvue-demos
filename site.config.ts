@@ -2,9 +2,9 @@
  * Site-wide configuration for the BIDSvue demos site.
  *
  * The Markdown in this repo stays plain and GitHub-native. Everything the
- * static-site build needs that *isn't* prose — the hero copy, the ordered
- * list of tutorials, the tool grid, external links — lives here so the
- * content files never carry frontmatter or build-only markup.
+ * static-site build needs that *isn't* prose — the ordered tutorial registry,
+ * tool grid, descriptions, and external links — lives here so the content
+ * files never carry frontmatter or build-only markup.
  */
 
 export type Tutorial = {
@@ -18,6 +18,8 @@ export type Tutorial = {
   tags: string[]
   /** Rough time-to-complete, shown on the card. */
   duration: string
+  /** Short label in the hero's tutorial shortcut list. */
+  shortcutLabel: string
 }
 
 export type Tool = {
@@ -29,7 +31,7 @@ export type Tool = {
 export type SiteConfig = {
   title: string
   tagline: string
-  /** Longer description for the home page's meta / social preview (not shown). */
+  /** Visible hero introduction and home-page meta / social description. */
   intro: string
   /** Canonical site origin (no trailing slash) — for canonical + OG/Twitter URLs. */
   siteUrl: string
@@ -62,6 +64,7 @@ const config: SiteConfig = {
         'shareable BIDS dataset.',
       tags: ['MRI', 'DICOM', 'De-identify', 'Share'],
       duration: '~15 min',
+      shortcutLabel: 'MRI',
     },
     {
       slug: 'meg-mne-1',
@@ -70,6 +73,7 @@ const config: SiteConfig = {
         'Use the MNE-BIDS plug-in to create, edit, and share a BIDS dataset.',
       tags: ['MEG', 'MNE-BIDS', 'De-identify', 'Share'],
       duration: '~15 min',
+      shortcutLabel: 'MEG',
     },
     {
       slug: 'pet-pet2bids-1',
@@ -78,6 +82,7 @@ const config: SiteConfig = {
         'Use PET2BIDS to create, edit, and share a BIDS dataset.',
       tags: ['PET', 'PET2BIDS', 'Edit', 'Share'],
       duration: '~15 min',
+      shortcutLabel: 'PET',
     },
     {
       slug: 'datalad-1',
@@ -86,6 +91,7 @@ const config: SiteConfig = {
         'Clone a huge remote dataset and fetch only the files you need.',
       tags: ['DataLad', 'Clone', 'Timeseries', 'Dashboard'],
       duration: '~15 min',
+      shortcutLabel: 'DATALAD',
     },
     {
       slug: 'mrs-dcm-1',
@@ -94,6 +100,7 @@ const config: SiteConfig = {
         'Convert Magnetic Resonance Spectroscopy (MRS) DICOMs and read the metabolite peaks in the spectrum.',
       tags: ['MRS', 'DICOM', 'Spectra'],
       duration: '~15 min',
+      shortcutLabel: 'MRS',
     },
     {
       slug: 'mri-physio-1',
@@ -102,6 +109,7 @@ const config: SiteConfig = {
         'Import and inspect physiological measures acquired with MRI.',
       tags: ['MRI', 'DICOM', 'Physio', 'AI'],
       duration: '~15 min',
+      shortcutLabel: 'PHYSIO',
     },
   ],
 

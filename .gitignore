@@ -1,5 +1,6 @@
 node_modules/
 dist/
+/.asset-manifest.json
 .DS_Store
 audit_temp.md
 audit_response.md

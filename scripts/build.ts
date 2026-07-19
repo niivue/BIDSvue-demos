@@ -12,8 +12,9 @@
  * the apex root "/", and a CNAME is emitted — so it is not a project-subpath deploy.
  */
 
+import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
-import { cp, mkdir, readdir, rm } from "node:fs/promises"
+import { cp, mkdir, readdir, readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
@@ -21,16 +22,135 @@ import { ARROW, HEAD_THEME_SCRIPT, escapeHtml, layout, mdToPanels } from "./rend
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
+const ASSETS = join(ROOT, "assets")
+const ASSET_MANIFEST = join(ROOT, ".asset-manifest.json")
+
+type AssetManifest = {
+  version: 1
+  files: Record<string, string>
+}
+
+async function assetFiles(dir: string, prefix = ""): Promise<string[]> {
+  let entries
+  try {
+    entries = await readdir(join(dir, prefix), { withFileTypes: true })
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return []
+    throw error
+  }
+
+  const files: string[] = []
+  for (const entry of entries) {
+    const path = prefix ? `${prefix}/${entry.name}` : entry.name
+    if (entry.isDirectory()) files.push(...(await assetFiles(dir, path)))
+    else if (entry.isFile()) files.push(path)
+  }
+  return files.sort()
+}
+
+async function fileHash(path: string): Promise<string | null> {
+  try {
+    return createHash("sha256").update(await readFile(path)).digest("hex")
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null
+    throw error
+  }
+}
+
+async function readAssetManifest(path: string): Promise<AssetManifest | null> {
+  try {
+    const parsed = JSON.parse(await readFile(path, "utf8")) as AssetManifest
+    return parsed.version === 1 && parsed.files && typeof parsed.files === "object" ? parsed : null
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT" || error instanceof SyntaxError) return null
+    throw error
+  }
+}
+
+/**
+ * Finds files edited or added directly under dist/assets since the last build.
+ * A generated file is safe to replace when it still matches the prior manifest,
+ * or when an identical copy has already been promoted into source assets/.
+ */
+export async function findUnpromotedDistAssets(
+  sourceAssets = ASSETS,
+  distAssets = join(DIST, "assets"),
+  manifestPath = ASSET_MANIFEST,
+): Promise<string[]> {
+  const manifest = await readAssetManifest(manifestPath)
+  // Without prior state, dist/ may simply come from an older checkout. The
+  // guard becomes authoritative only after this checkout completes a build.
+  if (!manifest) return []
+  const unpromoted: string[] = []
+
+  for (const relativePath of await assetFiles(distAssets)) {
+    const distHash = await fileHash(join(distAssets, relativePath))
+    if (manifest?.files[relativePath] === distHash) continue
+    if ((await fileHash(join(sourceAssets, relativePath))) === distHash) continue
+    unpromoted.push(relativePath)
+  }
+
+  return unpromoted
+}
+
+async function assertDistAssetsSafe(): Promise<void> {
+  const unpromoted = await findUnpromotedDistAssets()
+  if (unpromoted.length === 0) return
+
+  throw new Error(
+    "Refusing to rebuild dist/: these generated assets contain unpromoted changes:\n" +
+      unpromoted.map((path) => `  - dist/assets/${path}`).join("\n") +
+      "\nCopy the intended files into assets/ first, then rebuild.",
+  )
+}
+
+async function writeAssetManifest(): Promise<void> {
+  const files: Record<string, string> = {}
+  for (const relativePath of await assetFiles(ASSETS)) {
+    const hash = await fileHash(join(ASSETS, relativePath))
+    if (hash) files[relativePath] = hash
+  }
+  const manifest: AssetManifest = { version: 1, files }
+  await Bun.write(ASSET_MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`)
+}
+
+/** Finds local files referenced by CSS url() values that do not exist. */
+export async function findMissingCssAssets(
+  cssPath = join(ASSETS, "site.css"),
+  assetsDir = ASSETS,
+): Promise<string[]> {
+  const css = await readFile(cssPath, "utf8")
+  const refs = [...css.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)]
+    .map((match) => match[1].trim())
+    .filter((ref) => !/^(?:data:|https?:|#)/.test(ref))
+  const missing: string[] = []
+  for (const ref of new Set(refs)) {
+    if (!(await Bun.file(join(assetsDir, ref)).exists())) missing.push(ref)
+  }
+  return missing.sort()
+}
+
+async function assertCssAssetsExist(): Promise<void> {
+  const missing = await findMissingCssAssets()
+  if (missing.length === 0) return
+  throw new Error(
+    "Missing source assets referenced by assets/site.css:\n" +
+      missing.map((path) => `  - assets/${path}`).join("\n"),
+  )
+}
 
 // ------- landing page -------------------------------------------------------
 
-function tutorialCard(t: (typeof config.tutorials)[number]): string {
+function tutorialCard(t: (typeof config.tutorials)[number], index: number): string {
   const chips = t.tags.map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")
   return `
     <a class="card" href="${escapeHtml(t.slug)}/index.html">
-      <div class="card__tags">${chips}</div>
-      <h3>${escapeHtml(t.title)}</h3>
-      <p>${escapeHtml(t.summary)}</p>
+      <span class="card__index" aria-hidden="true">${index + 1}</span>
+      <div class="card__content">
+        <div class="card__tags">${chips}</div>
+        <h3>${escapeHtml(t.title)}</h3>
+        <p>${escapeHtml(t.summary)}</p>
+      </div>
       <div class="card__meta">
         <span>${escapeHtml(t.duration)}</span>
         <span class="card__go">Start${ARROW}</span>
@@ -49,31 +169,60 @@ function toolItem(t: (typeof config.tools)[number]): string {
 function landingPage(): string {
   const cards = config.tutorials.map(tutorialCard).join("")
   const tools = config.tools.map(toolItem).join("")
+  const shortcuts = config.tutorials
+    .map(
+      (tutorial, index) =>
+        `<a href="${escapeHtml(tutorial.slug)}/index.html"><b>${index + 1}</b> ${escapeHtml(tutorial.shortcutLabel)}</a>`,
+    )
+    .join("\n          ")
   const main = `
   <section class="hero">
-    <div class="container">
-      <h1>Curate BIDS data<br />with <b>${escapeHtml(config.title)}</b></h1>
-      <p class="hero__tagline">${escapeHtml(config.tagline)}</p>
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="hero__kicker"><span></span> Open-source neuroimaging workflow</p>
+        <h1>Curate BIDS data<br /><b>with precision.</b></h1>
+        <p class="hero__tagline">${escapeHtml(config.intro)}</p>
+        <div class="hero__actions">
+          <a class="hero__primary" href="#tutorials">Explore tutorials${ARROW}</a>
+          <a class="hero__secondary" href="${escapeHtml(config.releasesUrl)}">Download ${escapeHtml(config.title)}</a>
+        </div>
+        <nav class="hero__modalities" aria-label="Tutorial shortcuts">
+          ${shortcuts}
+        </nav>
+      </div>
+      <div class="hero__visual" data-radar-toggle aria-hidden="true">
+        <div class="hero__mesh-base"></div>
+        <div class="hero__activation"></div>
+        <div class="hero__scanline"></div>
+        <div class="hero__coordinates">
+          <span>NiiVue / cortical mesh</span>
+          <span>MNI152 · LH</span>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="section" id="tutorials">
     <div class="container">
       <div class="section__head">
-        <p class="section__eyebrow">Tutorials</p>
-        <h2>Learn by doing</h2>
-        <p class="section__lead">Tutorials to learn the fundamentals.</p>
+        <div>
+          <p class="section__eyebrow">Tutorials</p>
+          <h2>Learn by doing.</h2>
+        </div>
+        <p class="section__lead">Practical protocols for moving real neuroimaging data from acquisition to a validated, shareable BIDS dataset.</p>
       </div>
       <div class="cards">${cards}</div>
     </div>
   </section>
 
-  <section class="section" id="tools">
+  <section class="section section--tools" id="tools">
     <div class="container">
       <div class="section__head">
-        <p class="section__eyebrow">Under the hood</p>
-        <h2>Built on trusted open-source tools</h2>
-        <p class="section__lead">BIDSvue is a wrapper for proven core tools.</p>
+        <div>
+          <p class="section__eyebrow">Under the hood</p>
+          <h2>Proven tools,<br />one clear workflow.</h2>
+        </div>
+        <p class="section__lead">BIDSvue brings established open-source projects into one inspectable workflow. The underlying tools remain visible, attributable, and independently useful.</p>
       </div>
       <div class="tools">${tools}</div>
     </div>
@@ -291,6 +440,8 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
 // ------- orchestration ------------------------------------------------------
 
 export async function build(): Promise<void> {
+  await assertCssAssetsExist()
+  await assertDistAssetsSafe()
   await rm(DIST, { recursive: true, force: true })
   await mkdir(DIST, { recursive: true })
 
@@ -322,7 +473,8 @@ export async function build(): Promise<void> {
 
   for (const t of config.tutorials) await buildTutorial(t)
 
-  await cp(join(ROOT, "assets"), join(DIST, "assets"), { recursive: true })
+  await cp(ASSETS, join(DIST, "assets"), { recursive: true })
+  await writeAssetManifest()
 }
 
 if (import.meta.main) {

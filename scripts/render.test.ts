@@ -54,3 +54,15 @@ body-text
   expect(panelsHtml).toContain('class="step__media"')
   expect(panelsHtml).toContain("body-text")
 })
+
+test("image references include lead and panel figures", () => {
+  const { imageRefs } = mdToPanels(`# T
+
+![lead](lead.png)
+
+## 1. Do it
+
+![step](step.png)
+`)
+  expect(imageRefs).toEqual(["lead.png", "step.png"])
+})

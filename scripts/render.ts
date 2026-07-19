@@ -277,6 +277,7 @@ export type LayoutOpts = {
 }
 
 export function layout(o: LayoutOpts): string {
+  const pageClass = o.path === "" ? "page-home" : o.path === "about/" ? "page-about" : "page-tutorial"
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -301,7 +302,7 @@ export function layout(o: LayoutOpts): string {
 <link rel="stylesheet" href="${o.base}assets/site.css" />
 <script>${HEAD_THEME_SCRIPT}</script>
 ${o.headExtra ?? ""}</head>
-<body>
+<body class="${pageClass}">
 ${topbar(o.base)}
 <main>
 ${o.main}

@@ -1,7 +1,8 @@
 /**
- * Dev server: builds the site, serves `dist/` on http://localhost:5173, and
- * live-reloads the browser whenever a Markdown file or an asset changes. (Editing
- * `site.config.ts` needs a restart — build.ts caches the import.) Run `bun run dev`.
+ * Dev server: builds the site, serves `dist/` on the first available port from
+ * http://localhost:5173, and live-reloads the browser whenever a Markdown file
+ * or an asset changes. (Editing `site.config.ts` needs a restart — build.ts
+ * caches the import.) Run `bun run dev`. An explicit PORT remains strict.
  */
 
 import { readdirSync, statSync, watch } from "node:fs"
@@ -13,7 +14,14 @@ import { notFoundResponse, resolveFile } from "./static.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const DIST = join(ROOT, "dist")
-const PORT = Number(process.env.PORT ?? 5173)
+const DEFAULT_PORT = 5173
+const MAX_FALLBACK_ATTEMPTS = 20
+const hasExplicitPort = process.env.PORT !== undefined && process.env.PORT !== ""
+const preferredPort = hasExplicitPort ? Number(process.env.PORT) : DEFAULT_PORT
+
+if (!Number.isInteger(preferredPort) || preferredPort < 0 || preferredPort > 65_535) {
+  throw new Error(`Invalid PORT: ${process.env.PORT}`)
+}
 
 const RELOAD_SNIPPET = `
 <script>
@@ -37,48 +45,74 @@ function notifyReload() {
   }
 }
 
+// Concurrent dev servers can choose separate ports, but intentionally share
+// this one generated dist/ tree; run a single watcher when editing sources.
 await build()
 
-const server = Bun.serve({
-  port: PORT,
-  // The live-reload stream is a long-lived, mostly-silent response; without
-  // this Bun closes it after 10s (a noisy warning + needless reconnects).
-  idleTimeout: 0,
-  async fetch(req) {
-    const url = new URL(req.url)
+function startServer(port: number) {
+  return Bun.serve({
+    hostname: "localhost",
+    port,
+    // The live-reload stream is a long-lived, mostly-silent response; without
+    // this Bun closes it after 10s (a noisy warning + needless reconnects).
+    idleTimeout: 0,
+    async fetch(req) {
+      const url = new URL(req.url)
 
-    // Live-reload event stream.
-    if (url.pathname === "/__livereload") {
-      let self: ReadableStreamDefaultController
-      const stream = new ReadableStream({
-        start(controller) {
-          self = controller
-          clients.add(controller)
-        },
-        cancel() {
-          clients.delete(self)
-        },
-      })
-      return new Response(stream, {
-        headers: {
-          "content-type": "text/event-stream",
-          "cache-control": "no-cache",
-          connection: "keep-alive",
-        },
-      })
+      // Live-reload event stream.
+      if (url.pathname === "/__livereload") {
+        let self: ReadableStreamDefaultController
+        const stream = new ReadableStream({
+          start(controller) {
+            self = controller
+            clients.add(controller)
+          },
+          cancel() {
+            clients.delete(self)
+          },
+        })
+        return new Response(stream, {
+          headers: {
+            "content-type": "text/event-stream",
+            "cache-control": "no-cache",
+            connection: "keep-alive",
+          },
+        })
+      }
+
+      const r = await resolveFile(DIST, url.pathname)
+      if (!r) return notFoundResponse(DIST)
+
+      // Inject the live-reload client into HTML responses; stream everything else.
+      if (r.type.startsWith("text/html")) {
+        const html = (await r.file.text()).replace("</body>", `${RELOAD_SNIPPET}\n</body>`)
+        return new Response(html, { headers: { "content-type": r.type } })
+      }
+      return new Response(r.file, { headers: { "content-type": r.type } })
+    },
+  })
+}
+
+const server = (() => {
+  let port = preferredPort
+  while (true) {
+    try {
+      return startServer(port)
+    } catch (err) {
+      // PORT is an explicit contract for automation, so only the default port
+      // gets the friendly Vite-style fallback behavior.
+      if (
+        hasExplicitPort ||
+        (err as { code?: string }).code !== "EADDRINUSE" ||
+        port === preferredPort + MAX_FALLBACK_ATTEMPTS
+      ) {
+        throw err
+      }
+      console.warn(`  ⚠  Port ${port} is busy; trying ${port + 1}`)
+      port++
     }
-
-    const r = await resolveFile(DIST, url.pathname)
-    if (!r) return notFoundResponse(DIST)
-
-    // Inject the live-reload client into HTML responses; stream everything else.
-    if (r.type.startsWith("text/html")) {
-      const html = (await r.file.text()).replace("</body>", `${RELOAD_SNIPPET}\n</body>`)
-      return new Response(html, { headers: { "content-type": r.type } })
-    }
-    return new Response(r.file, { headers: { "content-type": r.type } })
-  },
-})
+  }
+})()
 
 const localUrl = `http://localhost:${server.port}`
 console.log(`\n  ➜  BIDSvue demos dev server`)

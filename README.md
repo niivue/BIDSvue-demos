@@ -53,7 +53,7 @@ Requires [Bun](https://bun.sh).
 
 ```bash
 bun install        # first time only (also activates the pre-commit hook)
-bun run dev        # build + serve at http://localhost:5173 with live reload
+bun run dev        # build + serve from http://localhost:5173 (next free port if busy)
 bun run build      # compile the static site into dist/
 bun run preview    # build, then serve dist/ exactly as Pages will
 bun run typecheck  # tsc --noEmit

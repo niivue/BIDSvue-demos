@@ -86,6 +86,35 @@ if (
   syncSwatches()
 })()
 
+// The home-page radar is decorative but directly controllable: click it, or
+// focus it and press Enter/Space, to freeze and resume the sweep in place.
+;(() => {
+  const radar = document.querySelector("[data-radar-toggle]")
+  if (!radar) return
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+
+  const sync = (paused) => {
+    radar.classList.toggle("radar-paused", paused)
+    radar.setAttribute("aria-pressed", String(paused))
+  }
+  const toggle = () => sync(!radar.classList.contains("radar-paused"))
+
+  radar.removeAttribute("aria-hidden")
+  radar.setAttribute("role", "button")
+  radar.setAttribute("tabindex", "0")
+  radar.setAttribute("aria-label", "Pause radar animation")
+  sync(false)
+
+  radar.addEventListener("click", toggle)
+  radar.addEventListener("keydown", (event) => {
+    if (event.repeat) return
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault()
+      toggle()
+    }
+  })
+})()
+
 // Screenshot lightbox: click a `.shot` to open the image large over a blurred
 // backdrop; click anywhere (or press Escape) to close. One overlay is reused
 // for every image on the page. Leading `;` so this IIFE isn't parsed as a
