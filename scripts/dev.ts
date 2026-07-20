@@ -97,9 +97,13 @@ function startServer(port: number) {
       // Inject the live-reload client into HTML responses; stream everything else.
       if (r.type.startsWith("text/html")) {
         const html = (await r.file.text()).replace("</body>", `${RELOAD_SNIPPET}\n</body>`)
-        return new Response(html, { headers: { "content-type": r.type } })
+        return new Response(html, {
+          headers: { "content-type": r.type, "cache-control": "no-store" },
+        })
       }
-      return new Response(r.file, { headers: { "content-type": r.type } })
+      return new Response(r.file, {
+        headers: { "content-type": r.type, "cache-control": "no-store" },
+      })
     },
   })
 }

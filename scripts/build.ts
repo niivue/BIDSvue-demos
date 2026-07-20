@@ -148,6 +148,7 @@ export const HERO_VARIANTS = [
   { id: "coronal", label: "NiiVue / voxel volumes", detail: "MNI152 · coronal" },
   { id: "sagittal", label: "NiiVue / voxel volumes", detail: "MNI152 · sagittal" },
   { id: "render", label: "NiiVue / surface render", detail: "cortical · multi-view" },
+  { id: "mri", label: "BIDSvue / MRI scanner", detail: "scanner · gantry" },
 ] as const
 const HERO_VARIANT_IDS = HERO_VARIANTS.map(({ id }) => id)
 const HERO_VARIANT_SCRIPT = `(function(){var variants=${JSON.stringify(HERO_VARIANT_IDS)};document.documentElement.setAttribute('data-hero-variant',variants[Math.floor(Math.random()*variants.length)])})();`
