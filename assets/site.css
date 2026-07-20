@@ -52,7 +52,6 @@ button:focus-visible,
   --bg-base: #f2f0ea;
   --bg-sidebar: #e7e4dc;
   --bg-elevated: #f8f7f3;
-  --bg-statusbar: #dedbd2;
 
   --border-subtle: rgba(22, 24, 23, 0.11);
   --border-strong: rgba(22, 24, 23, 0.2);
@@ -70,6 +69,9 @@ button:focus-visible,
   --accent: #bf5700;
   --accent-hover: #a44900;
   --accent-text: #ffffff;
+  --accent-control-text: var(--accent-text);
+  --accent-control-hover-text: var(--accent-text);
+  --accent-control-hover: var(--accent-hover);
   --accent-soft: rgba(191, 87, 0, 0.13);
   --accent-glow: rgba(191, 87, 0, 0.32);
 
@@ -90,8 +92,6 @@ button:focus-visible,
      tutorial pages cap tighter (--maxw-text) to keep a readable measure. */
   --maxw: clamp(1120px, 84vw, 1680px);
   --maxw-text: 1180px;
-  --radius: 3px;
-  --radius-lg: 5px;
 
   color-scheme: light;
   accent-color: var(--accent);
@@ -102,7 +102,6 @@ button:focus-visible,
   --bg-base: #0d0f0f;
   --bg-sidebar: #151817;
   --bg-elevated: #121514;
-  --bg-statusbar: #080a0a;
 
   --border-subtle: rgba(239, 241, 236, 0.1);
   --border-strong: rgba(239, 241, 236, 0.18);
@@ -124,7 +123,6 @@ button:focus-visible,
     --bg-base: #0d0f0f;
     --bg-sidebar: #151817;
     --bg-elevated: #121514;
-    --bg-statusbar: #080a0a;
 
     --border-subtle: rgba(239, 241, 236, 0.1);
     --border-strong: rgba(239, 241, 236, 0.18);
@@ -154,6 +152,8 @@ button:focus-visible,
   --accent: #6f9179;
   --accent-hover: #5c7a65;
   --accent-text: #ffffff;
+  --accent-control-text: #171918;
+  --accent-control-hover-text: #ffffff;
   --accent-soft: rgba(163, 193, 173, 0.22);
   --accent-glow: rgba(135, 168, 146, 0.4);
 }
@@ -175,6 +175,7 @@ button:focus-visible,
   --accent: #967dff;
   --accent-hover: #8269e0;
   --accent-text: #1a2620;
+  --accent-control-hover: var(--accent);
   --accent-soft: rgba(150, 125, 255, 0.18);
   --accent-glow: rgba(150, 125, 255, 0.42);
 }
@@ -182,6 +183,8 @@ button:focus-visible,
   --accent: #7a73ec;
   --accent-hover: #665fcd;
   --accent-text: #1a2620;
+  --accent-control-text: #171918;
+  --accent-control-hover-text: #ffffff;
   --accent-soft: rgba(122, 115, 236, 0.18);
   --accent-glow: rgba(122, 115, 236, 0.42);
 }
@@ -554,7 +557,7 @@ a:hover {
   border-right: 1px solid var(--border-strong);
   border-color: var(--border-strong);
   border-radius: 0 0 14px 0;
-  box-shadow: 10px 14px 42px -22px var(--ribbon-shadow), 0 0 0 1px var(--border-subtle);
+  box-shadow: 10px 14px 42px -22px var(--ribbon-shadow);
 }
 
 .brand {
@@ -623,7 +626,7 @@ a:hover {
   margin-left: -0.3rem;
   padding: 0 1rem 0 1.35rem;
   font: inherit;
-  color: var(--accent-text);
+  color: var(--accent-control-text);
   background: var(--accent);
   border: 0;
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 72%, white);
@@ -652,8 +655,8 @@ a:hover {
 }
 
 .topbar__peek:hover {
-  color: var(--accent-text);
-  background: var(--accent-hover);
+  color: var(--accent-control-hover-text);
+  background: var(--accent-control-hover);
   box-shadow: 0 10px 38px -8px var(--accent-glow), 0 0 28px -6px var(--accent-glow);
 }
 
@@ -769,59 +772,9 @@ a:hover {
   text-wrap: pretty;
 }
 
-.hero__actions {
+.hero__modalities {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.85rem 1.4rem;
-  margin-top: 1.55rem;
-}
-
-.hero__primary,
-.hero__secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
-  min-height: 2.75rem;
-  padding: 0.62rem 0.9rem;
-  font-size: 0.8rem;
-  font-weight: 680;
-  text-decoration: none;
-  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
-}
-
-.hero__primary {
-  color: var(--accent-text);
-  background: var(--accent);
-  border-radius: 8px;
-}
-
-.hero__primary:hover {
-  color: var(--accent-text);
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-}
-
-.hero__primary:active,
-.hero__secondary:active {
-  transform: translateY(1px);
-}
-
-.hero__secondary {
-  padding-inline: 0.2rem;
-  color: var(--hero-muted);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.hero__secondary:hover {
-  color: var(--hero-fg);
-  border-color: var(--accent);
-}
-
-.hero__modalities {
-  display: grid;
-  grid-template-columns: repeat(6, max-content);
   gap: clamp(1rem, 2vw, 2rem);
   margin-top: clamp(1.5rem, 2.8vw, 2.4rem);
   font-family: var(--font-mono);
@@ -900,14 +853,6 @@ a:hover {
   animation-play-state: paused;
 }
 
-.hero__visual::before {
-  content: "";
-  position: absolute;
-  inset: 7% 7% 9%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  clip-path: polygon(0 0, 92% 0, 100% 10%, 100% 100%, 8% 100%, 0 90%);
-}
-
 .hero__mesh-base,
 .hero__activation {
   position: absolute;
@@ -930,11 +875,11 @@ a:hover {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    transparent calc(var(--hero-scan) - 23.4%),
-    color-mix(in srgb, var(--accent) 5%, transparent) calc(var(--hero-scan) - 19.5%),
-    color-mix(in srgb, var(--accent) 16%, transparent) calc(var(--hero-scan) - 11.7%),
-    color-mix(in srgb, var(--accent) 42%, transparent) calc(var(--hero-scan) - 5.2%),
-    color-mix(in srgb, var(--accent) 76%, transparent) calc(var(--hero-scan) - 1.82%),
+    transparent calc(var(--hero-scan) - 46.8%),
+    color-mix(in srgb, var(--accent) 5%, transparent) calc(var(--hero-scan) - 39%),
+    color-mix(in srgb, var(--accent) 16%, transparent) calc(var(--hero-scan) - 23.4%),
+    color-mix(in srgb, var(--accent) 42%, transparent) calc(var(--hero-scan) - 10.4%),
+    color-mix(in srgb, var(--accent) 76%, transparent) calc(var(--hero-scan) - 3.64%),
     var(--accent) calc(var(--hero-scan) - 0.12%),
     transparent calc(var(--hero-scan) + 0.12%),
     transparent 100%
@@ -1486,7 +1431,7 @@ a:hover {
     drop-shadow(-2px -2px 0 color-mix(in srgb, var(--accent) 30%, white))
     drop-shadow(3px 3px 0 color-mix(in srgb, var(--accent) 38%, black))
     drop-shadow(0 0 12px var(--accent-glow));
-  opacity: 0.72;
+  opacity: 0.78;
 }
 
 .about > .container {
@@ -1588,10 +1533,6 @@ a:hover {
     margin-right: -9rem;
   }
 
-  .hero__modalities {
-    grid-template-columns: repeat(3, max-content);
-  }
-
   .card__content {
     grid-template-columns: minmax(12rem, 0.8fr) minmax(16rem, 1fr);
     column-gap: 2rem;
@@ -1615,6 +1556,10 @@ a:hover {
     max-width: 38rem;
   }
 
+  .hero__modalities {
+    display: none;
+  }
+
   .hero__visual {
     min-height: min(32rem, 76vw);
     margin: -3rem -10vw -2rem 18vw;
@@ -1634,7 +1579,7 @@ a:hover {
   .about::after {
     right: -4.5rem;
     width: 18rem;
-    opacity: 0.42;
+    opacity: 0.48;
   }
 
   .section__head {
@@ -1691,10 +1636,6 @@ a:hover {
 
   .hero h1 {
     font-size: clamp(2.6rem, 12.5vw, 3.8rem);
-  }
-
-  .hero__modalities {
-    grid-template-columns: repeat(2, max-content);
   }
 
   .hero__visual {

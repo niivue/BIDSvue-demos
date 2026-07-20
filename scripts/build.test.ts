@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test"
 import { createHash } from "node:crypto"
-import { mkdir, mkdtemp, rm } from "node:fs/promises"
+import { mkdir, mkdtemp, rm, symlink } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { HERO_VARIANTS, aboutPage, build, findMissingCssAssets, findUnpromotedDistAssets } from "./build.ts"
+import { HERO_VARIANTS, aboutPage, build, buildIsolated, findMissingCssAssets, findUnpromotedDistAssets } from "./build.ts"
 import { layout } from "./render.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
@@ -118,6 +118,56 @@ test("asset guard protects dist-only changes until they are promoted", async () 
 
     await Bun.write(join(generated, "dist-only.png"), "not-promoted")
     expect(await findUnpromotedDistAssets(source, generated, manifest)).toEqual(["dist-only.png"])
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test("isolated builds replace only their requested output tree", async () => {
+  const output = await mkdtemp(join(tmpdir(), "bidsvue-demos-dev-"))
+  const manifestFile = Bun.file(ASSET_MANIFEST)
+  const manifestBefore = (await manifestFile.exists()) ? await manifestFile.text() : null
+  try {
+    await Bun.write(join(output, "stale.txt"), "remove me")
+    await buildIsolated(output)
+    expect(await Bun.file(join(output, "index.html")).exists()).toBe(true)
+    expect(await Bun.file(join(output, "assets", "site.css")).exists()).toBe(true)
+    expect(await Bun.file(join(output, "stale.txt")).exists()).toBe(false)
+    const manifestAfter = (await manifestFile.exists()) ? await manifestFile.text() : null
+    expect(manifestAfter).toBe(manifestBefore)
+  } finally {
+    await rm(output, { recursive: true, force: true })
+  }
+})
+
+test("isolated builds reject output outside the temporary directory", async () => {
+  await expect(buildIsolated(join(ROOT, "unsafe-output"))).rejects.toThrow(
+    "Isolated build output must be an owned dev temporary directory",
+  )
+})
+
+test("isolated builds reject unrelated temporary directories", async () => {
+  const unrelated = await mkdtemp(join(tmpdir(), "bidsvue-unrelated-"))
+  try {
+    await Bun.write(join(unrelated, "keep.txt"), "keep me")
+    await expect(buildIsolated(unrelated)).rejects.toThrow(
+      "Isolated build output must be an owned dev temporary directory",
+    )
+    expect(await Bun.file(join(unrelated, "keep.txt")).text()).toBe("keep me")
+  } finally {
+    await rm(unrelated, { recursive: true, force: true })
+  }
+})
+
+test("isolated builds reject temporary symlinks that escape to the repository", async () => {
+  const root = await mkdtemp(join(tmpdir(), "bidsvue-isolated-escape-"))
+  const escape = join(root, "escape")
+  try {
+    await symlink(ROOT, escape, "dir")
+    await expect(buildIsolated(join(escape, "assets"))).rejects.toThrow(
+      "Isolated build output must be an owned dev temporary directory",
+    )
+    expect(await Bun.file(join(ROOT, "assets", "site.css")).exists()).toBe(true)
   } finally {
     await rm(root, { recursive: true, force: true })
   }

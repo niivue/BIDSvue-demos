@@ -14,8 +14,9 @@
 
 import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
-import { cp, mkdir, readdir, readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
+import { cp, mkdir, readdir, readFile, realpath, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { basename, dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
 import { ARROW, HEAD_THEME_SCRIPT, escapeHtml, layout, mdToPanels } from "./render.ts"
@@ -198,10 +199,6 @@ function landingPage(): string {
         <p class="hero__kicker"><span></span> Open-source neuroimaging workflow</p>
         <h1>Curate BIDS data<br /><b>with precision.</b></h1>
         <p class="hero__tagline">${escapeHtml(config.intro)}</p>
-        <div class="hero__actions">
-          <a class="hero__primary" href="#tutorials">Explore tutorials${ARROW}</a>
-          <a class="hero__secondary" href="${escapeHtml(config.releasesUrl)}">Download ${escapeHtml(config.title)}</a>
-        </div>
         <nav class="hero__modalities" aria-label="Tutorial shortcuts">
           ${shortcuts}
         </nav>
@@ -264,7 +261,7 @@ function pngSize(path: string): { w: number; h: number } | null {
   }
 }
 
-async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void> {
+async function buildTutorial(t: (typeof config.tutorials)[number], outputRoot: string): Promise<void> {
   const dir = join(ROOT, t.slug)
   const md = await Bun.file(join(dir, "README.md")).text()
   // Resolve each figure's real size so the browser reserves its box (no CLS).
@@ -306,7 +303,7 @@ async function buildTutorial(t: (typeof config.tutorials)[number]): Promise<void
     main,
   })
 
-  const outDir = join(DIST, t.slug)
+  const outDir = join(outputRoot, t.slug)
   await mkdir(outDir, { recursive: true })
   await Bun.write(join(outDir, "index.html"), html)
 
@@ -437,8 +434,8 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
 .notfound__code { font-size: clamp(4.5rem, 20vw, 10rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; color: var(--accent); }
 .notfound h1 { font-size: clamp(1.5rem, 4vw, 2.3rem); letter-spacing: -0.02em; }
 .notfound__lead { color: var(--fg-muted); max-width: 42ch; margin: 0.6rem auto 1.8rem; }
-.notfound__home { display: inline-flex; align-items: center; gap: 0.5ch; font-weight: 650; text-decoration: none; color: var(--accent-text); background: var(--accent); padding: 0.75rem 1.3rem; border-radius: 12px; box-shadow: 0 10px 30px -14px var(--accent-glow); }
-.notfound__home:hover { background: var(--accent-hover); color: var(--accent-text); }</style>
+.notfound__home { display: inline-flex; align-items: center; gap: 0.5ch; font-weight: 650; text-decoration: none; color: var(--accent-control-text); background: var(--accent); padding: 0.75rem 1.3rem; border-radius: 12px; box-shadow: 0 10px 30px -14px var(--accent-glow); }
+.notfound__home:hover { background: var(--accent-control-hover); color: var(--accent-control-hover-text); }</style>
 </head>
 <body>
 <main class="notfound">
@@ -453,42 +450,66 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
 
 // ------- orchestration ------------------------------------------------------
 
-export async function build(): Promise<void> {
+async function buildInto(outputRoot: string, canonical: boolean): Promise<void> {
   await assertCssAssetsExist()
-  await assertDistAssetsSafe()
-  await rm(DIST, { recursive: true, force: true })
-  await mkdir(DIST, { recursive: true })
+  // Disposable dev-server trees never contain hand-edited generated assets;
+  // the promotion guard protects only the canonical deploy output.
+  if (canonical) await assertDistAssetsSafe()
+  await rm(outputRoot, { recursive: true, force: true })
+  await mkdir(outputRoot, { recursive: true })
 
-  await Bun.write(join(DIST, "index.html"), landingPage())
-  await mkdir(join(DIST, "about"), { recursive: true })
-  await Bun.write(join(DIST, "about", "index.html"), aboutPage())
-  await Bun.write(join(DIST, "404.html"), await notFoundPage())
+  await Bun.write(join(outputRoot, "index.html"), landingPage())
+  await mkdir(join(outputRoot, "about"), { recursive: true })
+  await Bun.write(join(outputRoot, "about", "index.html"), aboutPage())
+  await Bun.write(join(outputRoot, "404.html"), await notFoundPage())
   // GitHub Pages: skip Jekyll so `assets/` etc. are served verbatim.
-  await Bun.write(join(DIST, ".nojekyll"), "")
+  await Bun.write(join(outputRoot, ".nojekyll"), "")
   // Custom apex domain, derived from the one source of truth (config.siteUrl).
   // Emitting CNAME on every deploy keeps Pages from clearing the domain on an
   // Actions redeploy.
-  await Bun.write(join(DIST, "CNAME"), `${new URL(config.siteUrl).host}\n`)
+  await Bun.write(join(outputRoot, "CNAME"), `${new URL(config.siteUrl).host}\n`)
 
   // Crawlability signals: a robots.txt + sitemap help reputation/search crawlers
   // discover and categorize the site as legitimate content (see aboutPage).
   const urls = ["", "about/", ...config.tutorials.map((t) => `${t.slug}/`)]
   await Bun.write(
-    join(DIST, "robots.txt"),
+    join(outputRoot, "robots.txt"),
     `User-agent: *\nAllow: /\nSitemap: ${config.siteUrl}/sitemap.xml\n`,
   )
   await Bun.write(
-    join(DIST, "sitemap.xml"),
+    join(outputRoot, "sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
       `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
       urls.map((u) => `  <url><loc>${config.siteUrl}/${u}</loc></url>`).join("\n") +
       `\n</urlset>\n`,
   )
 
-  for (const t of config.tutorials) await buildTutorial(t)
+  for (const t of config.tutorials) await buildTutorial(t, outputRoot)
 
-  await cp(ASSETS, join(DIST, "assets"), { recursive: true })
-  await writeAssetManifest()
+  await cp(ASSETS, join(outputRoot, "assets"), { recursive: true })
+  if (canonical) await writeAssetManifest()
+}
+
+export async function build(): Promise<void> {
+  await buildInto(DIST, true)
+}
+
+/** Rebuilds a disposable dev tree, restricted to the operating-system temp directory. */
+export async function buildIsolated(outputRoot: string): Promise<void> {
+  let resolvedOutput: string
+  try {
+    resolvedOutput = await realpath(outputRoot)
+  } catch {
+    throw new Error(`Isolated build output must be an owned dev temporary directory: ${outputRoot}`)
+  }
+  const resolvedTemp = await realpath(tmpdir())
+  if (
+    dirname(resolvedOutput) !== resolvedTemp ||
+    !basename(resolvedOutput).startsWith("bidsvue-demos-dev-")
+  ) {
+    throw new Error(`Isolated build output must be an owned dev temporary directory: ${outputRoot}`)
+  }
+  await buildInto(resolvedOutput, false)
 }
 
 if (import.meta.main) {

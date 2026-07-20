@@ -1,19 +1,33 @@
 /**
- * Dev server: builds the site, serves `dist/` on the first available port from
- * http://localhost:5173, and live-reloads the browser whenever a Markdown file
- * or an asset changes. (Editing `site.config.ts` needs a restart — build.ts
+ * Dev server: builds the site into an isolated temporary tree, serves it on the
+ * first available port from http://localhost:5173, and live-reloads the browser
+ * whenever a Markdown file or an asset changes. (Editing `site.config.ts` needs a restart — build.ts
  * caches the import.) Run `bun run dev`. An explicit PORT remains strict.
  */
 
-import { readdirSync, statSync, watch } from "node:fs"
+import { readdirSync, rmSync, statSync, watch } from "node:fs"
+import { mkdtemp } from "node:fs/promises"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { build } from "./build.ts"
+import { buildIsolated } from "./build.ts"
 import { notFoundResponse, resolveFile } from "./static.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
-const DIST = join(ROOT, "dist")
+// Each process gets an isolated generated tree. This preserves fallback ports
+// without letting concurrent dev servers destructively rebuild the same dist/.
+const SERVE_ROOT = await mkdtemp(join(tmpdir(), "bidsvue-demos-dev-"))
+const removeServeRoot = () => rmSync(SERVE_ROOT, { recursive: true, force: true })
+process.once("exit", removeServeRoot)
+process.once("SIGINT", () => {
+  removeServeRoot()
+  process.exit(130)
+})
+process.once("SIGTERM", () => {
+  removeServeRoot()
+  process.exit(143)
+})
 const DEFAULT_PORT = 5173
 const MAX_FALLBACK_ATTEMPTS = 20
 const hasExplicitPort = process.env.PORT !== undefined && process.env.PORT !== ""
@@ -45,9 +59,7 @@ function notifyReload() {
   }
 }
 
-// Concurrent dev servers can choose separate ports, but intentionally share
-// this one generated dist/ tree; run a single watcher when editing sources.
-await build()
+await buildIsolated(SERVE_ROOT)
 
 function startServer(port: number) {
   return Bun.serve({
@@ -80,8 +92,8 @@ function startServer(port: number) {
         })
       }
 
-      const r = await resolveFile(DIST, url.pathname)
-      if (!r) return notFoundResponse(DIST)
+      const r = await resolveFile(SERVE_ROOT, url.pathname)
+      if (!r) return notFoundResponse(SERVE_ROOT)
 
       // Inject the live-reload client into HTML responses; stream everything else.
       if (r.type.startsWith("text/html")) {
@@ -133,8 +145,7 @@ if (!process.env.NO_OPEN) {
   }
 }
 
-// Watch ONLY source locations — never the repo root (the build writes dist/
-// inside it, which would loop). `site.config.ts` is deliberately NOT watched:
+// Watch ONLY source locations — never the repo root. `site.config.ts` is deliberately NOT watched:
 // build.ts imports it once, so a running process keeps the cached module and
 // config edits wouldn't take effect anyway — they need a dev restart.
 const watchTargets = [
@@ -157,7 +168,13 @@ function sourceSignature(): string {
       return
     }
     if (st.isDirectory()) {
-      for (const entry of readdirSync(p)) {
+      let entries: string[]
+      try {
+        entries = readdirSync(p)
+      } catch {
+        return
+      }
+      for (const entry of entries) {
         if (entry.startsWith(".")) continue
         walk(join(p, entry))
       }
@@ -188,15 +205,15 @@ async function runRebuild(): Promise<void> {
       if (sig === lastSignature) continue // spurious event (e.g. read-only access)
       lastSignature = sig
       try {
-        await build()
+        await buildIsolated(SERVE_ROOT)
         console.log("  ↻  rebuilt")
         notifyReload()
       } catch (err) {
         console.error("  ✗  build failed:", err instanceof Error ? err.message : err)
       }
 
-      // A source edit may arrive while build() is replacing dist/. Queue one
-      // follow-up build instead of allowing the two destructive writes to race.
+      // A source edit may arrive while this process is replacing its generated
+      // tree. Queue one follow-up build instead of racing two destructive writes.
       if (sourceSignature() !== lastSignature) buildQueued = true
     } while (buildQueued)
   } finally {
@@ -208,7 +225,9 @@ const rebuild = () => {
   if (timer) clearTimeout(timer)
   timer = setTimeout(() => {
     timer = null
-    void runRebuild()
+    void runRebuild().catch((err) => {
+      console.error("  ✗  rebuild failed:", err instanceof Error ? err.message : err)
+    })
   }, 80)
 }
 
