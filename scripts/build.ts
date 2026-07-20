@@ -147,6 +147,7 @@ export const HERO_VARIANTS = [
   { id: "voxel", label: "NiiVue / voxel volumes", detail: "MNI152 · axial" },
   { id: "coronal", label: "NiiVue / voxel volumes", detail: "MNI152 · coronal" },
   { id: "sagittal", label: "NiiVue / voxel volumes", detail: "MNI152 · sagittal" },
+  { id: "render", label: "NiiVue / surface render", detail: "cortical · multi-view" },
 ] as const
 const HERO_VARIANT_IDS = HERO_VARIANTS.map(({ id }) => id)
 const HERO_VARIANT_SCRIPT = `(function(){var variants=${JSON.stringify(HERO_VARIANT_IDS)};document.documentElement.setAttribute('data-hero-variant',variants[Math.floor(Math.random()*variants.length)])})();`
@@ -261,22 +262,37 @@ function pngSize(path: string): { w: number; h: number } | null {
   }
 }
 
+export async function findMissingTutorialImages(
+  tutorials: readonly { slug: string }[] = config.tutorials,
+  root = ROOT,
+): Promise<string[]> {
+  const missing: string[] = []
+  for (const tutorial of tutorials) {
+    const dir = join(root, tutorial.slug)
+    const md = await Bun.file(join(dir, "README.md")).text()
+    const { imageRefs } = mdToPanels(md, () => null)
+    for (const src of new Set(imageRefs)) {
+      if (/^https?:/.test(src)) continue
+      if (!(await Bun.file(join(dir, src)).exists())) missing.push(`${tutorial.slug}/${src}`)
+    }
+  }
+  return missing.sort()
+}
+
+async function assertTutorialImagesExist(): Promise<void> {
+  const missing = await findMissingTutorialImages()
+  if (missing.length === 0) return
+  throw new Error(
+    "Missing local images referenced by tutorial Markdown:\n" +
+      missing.map((path) => `  - ${path}`).join("\n"),
+  )
+}
+
 async function buildTutorial(t: (typeof config.tutorials)[number], outputRoot: string): Promise<void> {
   const dir = join(ROOT, t.slug)
   const md = await Bun.file(join(dir, "README.md")).text()
   // Resolve each figure's real size so the browser reserves its box (no CLS).
-  const { title, leadHtml, panelsHtml, imageRefs } = mdToPanels(md, (href) => pngSize(join(dir, href)))
-
-  // Warn (don't fail) on referenced local images that don't exist — catches
-  // typos and missing screenshots before they 404 on the live site. Checks the
-  // raw hrefs from the token pass (lead + panels), so real filenames — even ones
-  // with characters HTML-escaping would mangle — resolve correctly.
-  for (const src of imageRefs) {
-    if (/^https?:/.test(src)) continue
-    if (!(await Bun.file(join(dir, src)).exists())) {
-      console.warn(`  ⚠  ${t.slug}: referenced image not found — ${src}`)
-    }
-  }
+  const { title, leadHtml, panelsHtml } = mdToPanels(md, (href) => pngSize(join(dir, href)))
 
   const chips = [...t.tags, t.duration]
     .map((c) => `<span class="chip">${escapeHtml(c)}</span>`)
@@ -452,6 +468,7 @@ main.notfound { min-height: 82vh; display: grid; place-content: center; justify-
 
 async function buildInto(outputRoot: string, canonical: boolean): Promise<void> {
   await assertCssAssetsExist()
+  await assertTutorialImagesExist()
   // Disposable dev-server trees never contain hand-edited generated assets;
   // the promotion guard protects only the canonical deploy output.
   if (canonical) await assertDistAssetsSafe()

@@ -5,7 +5,15 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
-import { HERO_VARIANTS, aboutPage, build, buildIsolated, findMissingCssAssets, findUnpromotedDistAssets } from "./build.ts"
+import {
+  HERO_VARIANTS,
+  aboutPage,
+  build,
+  buildIsolated,
+  findMissingCssAssets,
+  findMissingTutorialImages,
+  findUnpromotedDistAssets,
+} from "./build.ts"
 import { layout } from "./render.ts"
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
@@ -72,12 +80,14 @@ test("build emits the full generated-site contract (CNAME/robots/sitemap/404)", 
   expect(assetManifest.files["site.css"]).toMatch(/^[a-f0-9]{64}$/)
 
   const home = await read("index.html")
+  const heroIds = HERO_VARIANTS.map(({ id }) => id)
   expect(home).toContain("data-hero-variant")
-  expect(home).toContain('["mesh","voxel","coronal","sagittal"]')
-  expect(home).toContain('data-hero-variants="mesh voxel coronal sagittal"')
-  expect(home).toContain('data-radar-toggle')
-  expect(home).toMatch(/data-radar-toggle[^>]*aria-hidden="true"/)
-  expect(home).not.toContain('data-radar-toggle role="button"')
+  expect(home).toContain(JSON.stringify(heroIds))
+  expect(home).toContain(`data-hero-variants="${heroIds.join(" ")}"`)
+  const radarTag = home.match(/<div class="hero__visual"[^>]*>/)?.[0]
+  expect(radarTag).toContain("data-radar-toggle")
+  expect(radarTag).toContain('aria-hidden="true"')
+  expect(radarTag).not.toMatch(/\s(?:role|tabindex)=/)
   for (const [index, tutorial] of config.tutorials.entries()) {
     expect(home).toContain(
       `<a href="${tutorial.slug}/index.html"><b>${index + 1}</b> ${tutorial.shortcutLabel}</a>`,
@@ -206,8 +216,31 @@ test("CSS asset guard reports missing local url references", async () => {
   }
 })
 
+test("tutorial image guard reports missing local references and permits remote images", async () => {
+  const root = await mkdtemp(join(tmpdir(), "bidsvue-tutorial-assets-"))
+  const tutorial = join(root, "example")
+  try {
+    await mkdir(tutorial, { recursive: true })
+    await Bun.write(
+      join(tutorial, "README.md"),
+      "# Example\n\n![Present](present.png)\n\n![Missing](missing.png)\n\n![Remote](https://example.com/remote.png)\n",
+    )
+    await Bun.write(join(tutorial, "present.png"), "present")
+    expect(await findMissingTutorialImages([{ slug: "example" }], root)).toEqual([
+      "example/missing.png",
+    ])
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
 test("hero variants have registered, dimension-matched PNG pairs with alpha masks", async () => {
   const css = await Bun.file(join(ROOT, "assets", "site.css")).text()
+  const registeredIds = new Set<string>(HERO_VARIANTS.map(({ id }) => id))
+  const cssVariantIds = new Set(
+    [...css.matchAll(/data-hero-variant="([^"]+)"/g)].map((match) => match[1]),
+  )
+  expect([...cssVariantIds].filter((id) => !registeredIds.has(id))).toEqual([])
   const pngInfo = async (path: string) => {
     const bytes = Buffer.from(await Bun.file(path).arrayBuffer())
     expect(bytes.length).toBeGreaterThanOrEqual(26)
@@ -226,6 +259,12 @@ test("hero variants have registered, dimension-matched PNG pairs with alpha mask
     const activePath = join(ROOT, "assets", activeName)
     expect(css).toContain(`url("${baseName}")`)
     expect(css).toContain(`url("${activeName}")`)
+    expect(css).toContain(`.hero__coordinates--${id}`)
+    if (id !== "mesh") {
+      expect(css).toContain(
+        `:root[data-hero-variant="${id}"] .hero__coordinates--${id}`,
+      )
+    }
     expect(await Bun.file(basePath).exists()).toBe(true)
     expect(await Bun.file(activePath).exists()).toBe(true)
 

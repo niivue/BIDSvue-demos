@@ -821,7 +821,8 @@ a:hover {
 
 :root[data-hero-variant="voxel"] .hero__visual,
 :root[data-hero-variant="coronal"] .hero__visual,
-:root[data-hero-variant="sagittal"] .hero__visual {
+:root[data-hero-variant="sagittal"] .hero__visual,
+:root[data-hero-variant="render"] .hero__visual {
   --hero-image-size: 96% auto;
   animation-name: hero-radar-position-wide;
 }
@@ -839,6 +840,11 @@ a:hover {
 :root[data-hero-variant="sagittal"] .hero__visual {
   --hero-base-image: url("sagittal-base.png");
   --hero-active-image: url("sagittal-active.png");
+}
+
+:root[data-hero-variant="render"] .hero__visual {
+  --hero-base-image: url("render-base.png");
+  --hero-active-image: url("render-active.png");
 }
 
 .hero__visual[role="button"] {
@@ -920,19 +926,22 @@ a:hover {
 
 .hero__coordinates--voxel,
 .hero__coordinates--coronal,
-.hero__coordinates--sagittal {
+.hero__coordinates--sagittal,
+.hero__coordinates--render {
   display: none;
 }
 
 :root[data-hero-variant="voxel"] .hero__coordinates--mesh,
 :root[data-hero-variant="coronal"] .hero__coordinates--mesh,
-:root[data-hero-variant="sagittal"] .hero__coordinates--mesh {
+:root[data-hero-variant="sagittal"] .hero__coordinates--mesh,
+:root[data-hero-variant="render"] .hero__coordinates--mesh {
   display: none;
 }
 
 :root[data-hero-variant="voxel"] .hero__coordinates--voxel,
 :root[data-hero-variant="coronal"] .hero__coordinates--coronal,
-:root[data-hero-variant="sagittal"] .hero__coordinates--sagittal {
+:root[data-hero-variant="sagittal"] .hero__coordinates--sagittal,
+:root[data-hero-variant="render"] .hero__coordinates--render {
   display: flex;
 }
 
@@ -1546,6 +1555,12 @@ a:hover {
   }
 }
 
+@media (min-width: 821px) and (max-width: 1250px) {
+  :root[data-hero-variant="render"] .hero__visual {
+    margin-right: 0;
+  }
+}
+
 @media (max-width: 820px) {
   .hero {
     padding-bottom: 3rem;
@@ -1570,7 +1585,8 @@ a:hover {
 
   :root[data-hero-variant="voxel"] .hero__visual,
   :root[data-hero-variant="coronal"] .hero__visual,
-  :root[data-hero-variant="sagittal"] .hero__visual {
+  :root[data-hero-variant="sagittal"] .hero__visual,
+  :root[data-hero-variant="render"] .hero__visual {
     min-height: clamp(16rem, 43vw, 22rem);
     margin: -0.5rem -1rem -2rem;
   }
