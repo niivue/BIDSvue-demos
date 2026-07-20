@@ -16,7 +16,7 @@ import { createHash } from "node:crypto"
 import { readFileSync } from "node:fs"
 import { cp, mkdir, readdir, readFile, realpath, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { basename, dirname, join } from "node:path"
+import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import config from "../site.config.ts"
 import { ARROW, HEAD_THEME_SCRIPT, escapeHtml, layout, mdToPanels } from "./render.ts"
@@ -496,18 +496,26 @@ export async function build(): Promise<void> {
 
 /** Rebuilds a disposable dev tree, restricted to the operating-system temp directory. */
 export async function buildIsolated(outputRoot: string): Promise<void> {
-  let resolvedOutput: string
-  try {
-    resolvedOutput = await realpath(outputRoot)
-  } catch {
-    throw new Error(`Isolated build output must be an owned dev temporary directory: ${outputRoot}`)
+  const requestedOutput = resolve(outputRoot)
+  const requestedTemp = resolve(tmpdir())
+  const outputName = basename(requestedOutput)
+  const ownershipError = () =>
+    new Error(`Isolated build output must be an owned dev temporary directory: ${outputRoot}`)
+  if (dirname(requestedOutput) !== requestedTemp || !outputName.startsWith("bidsvue-demos-dev-")) {
+    throw ownershipError()
   }
-  const resolvedTemp = await realpath(tmpdir())
-  if (
-    dirname(resolvedOutput) !== resolvedTemp ||
-    !basename(resolvedOutput).startsWith("bidsvue-demos-dev-")
-  ) {
-    throw new Error(`Isolated build output must be an owned dev temporary directory: ${outputRoot}`)
+
+  const resolvedTemp = await realpath(requestedTemp)
+  // If the OS reaps an active dev tree, keep the validated canonical candidate;
+  // buildInto() will recreate it. Existing paths are realpathed to reject links.
+  let resolvedOutput = join(resolvedTemp, outputName)
+  try {
+    resolvedOutput = await realpath(requestedOutput)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw ownershipError()
+  }
+  if (dirname(resolvedOutput) !== resolvedTemp || basename(resolvedOutput) !== outputName) {
+    throw ownershipError()
   }
   await buildInto(resolvedOutput, false)
 }

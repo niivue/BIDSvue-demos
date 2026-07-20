@@ -20,14 +20,13 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const SERVE_ROOT = await mkdtemp(join(tmpdir(), "bidsvue-demos-dev-"))
 const removeServeRoot = () => rmSync(SERVE_ROOT, { recursive: true, force: true })
 process.once("exit", removeServeRoot)
-process.once("SIGINT", () => {
+const cleanupAndExit = (code: number) => {
   removeServeRoot()
-  process.exit(130)
-})
-process.once("SIGTERM", () => {
-  removeServeRoot()
-  process.exit(143)
-})
+  process.exit(code)
+}
+for (const [signal, code] of [["SIGHUP", 129], ["SIGINT", 130], ["SIGTERM", 143]] as const) {
+  process.once(signal, () => cleanupAndExit(code))
+}
 const DEFAULT_PORT = 5173
 const MAX_FALLBACK_ATTEMPTS = 20
 const hasExplicitPort = process.env.PORT !== undefined && process.env.PORT !== ""

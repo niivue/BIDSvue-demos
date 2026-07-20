@@ -140,10 +140,29 @@ test("isolated builds replace only their requested output tree", async () => {
   }
 })
 
+test("isolated builds recover an owned output tree that disappeared", async () => {
+  const output = await mkdtemp(join(tmpdir(), "bidsvue-demos-dev-"))
+  try {
+    await rm(output, { recursive: true })
+    await buildIsolated(output)
+    expect(await Bun.file(join(output, "index.html")).exists()).toBe(true)
+    expect(await Bun.file(join(output, "assets", "site.css")).exists()).toBe(true)
+  } finally {
+    await rm(output, { recursive: true, force: true })
+  }
+})
+
 test("isolated builds reject output outside the temporary directory", async () => {
-  await expect(buildIsolated(join(ROOT, "unsafe-output"))).rejects.toThrow(
-    "Isolated build output must be an owned dev temporary directory",
-  )
+  const outside = await mkdtemp(join(ROOT, ".bidsvue-build-guard-"))
+  try {
+    await Bun.write(join(outside, "keep.txt"), "keep me")
+    await expect(buildIsolated(outside)).rejects.toThrow(
+      "Isolated build output must be an owned dev temporary directory",
+    )
+    expect(await Bun.file(join(outside, "keep.txt")).text()).toBe("keep me")
+  } finally {
+    await rm(outside, { recursive: true, force: true })
+  }
 })
 
 test("isolated builds reject unrelated temporary directories", async () => {
@@ -160,16 +179,19 @@ test("isolated builds reject unrelated temporary directories", async () => {
 })
 
 test("isolated builds reject temporary symlinks that escape to the repository", async () => {
-  const root = await mkdtemp(join(tmpdir(), "bidsvue-isolated-escape-"))
-  const escape = join(root, "escape")
+  const target = await mkdtemp(join(ROOT, ".bidsvue-build-target-"))
+  const escape = await mkdtemp(join(tmpdir(), "bidsvue-demos-dev-"))
   try {
-    await symlink(ROOT, escape, "dir")
-    await expect(buildIsolated(join(escape, "assets"))).rejects.toThrow(
+    await Bun.write(join(target, "keep.txt"), "keep me")
+    await rm(escape, { recursive: true })
+    await symlink(target, escape, "dir")
+    await expect(buildIsolated(escape)).rejects.toThrow(
       "Isolated build output must be an owned dev temporary directory",
     )
-    expect(await Bun.file(join(ROOT, "assets", "site.css")).exists()).toBe(true)
+    expect(await Bun.file(join(target, "keep.txt")).text()).toBe("keep me")
   } finally {
-    await rm(root, { recursive: true, force: true })
+    await rm(escape, { recursive: true, force: true })
+    await rm(target, { recursive: true, force: true })
   }
 })
 
